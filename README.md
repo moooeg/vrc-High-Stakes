@@ -1,4 +1,5 @@
-![frij-75477M-banner](https://github.com/peterdev22/vrc-over-under/assets/95014170/cdd0f52d-31db-4441-8958-1f1a1ae631fa)
+![frij-75477M-banner](https://github.com/moooeg/vrc-2024-2025/assets/132447977/49f0d6af-dc15-46bc-bd3e-763abb7cdd45)
+
 
 # Frij 75477M
 This repository contains team 75477M's code for the [2024-2025 ...](video) season of the VEX robotics competition.
