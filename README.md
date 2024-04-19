@@ -2,7 +2,7 @@
 
 
 # Frij 75477M
-This repository contains team 75477M's code for the [2024-2025 ...](video) season of the VEX robotics competition.
+This repository contains team 75477M's code for the [2024-2025 High Stakes](video) season of the VEX robotics competition.
 
 Having the code in a git remote allows us to collaborate as a team easily as everyone has access to the codebase and any changes can immediately be reflected across all our devices. 
 
