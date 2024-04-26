@@ -152,9 +152,12 @@ def drivetrain_straight(distance):
     ki = 0.139
     kd = 0.05
     #distance
-    kp_d = 0.5
+    kp_d= 0.5
+    ki_d= 0.1
+    kd_d= 0.1
     max_speed = 50
     distance_error = distance - (rightwheel_rotation+leftwheel_rotation)/720* math.Pi * 82.55
+    previous_distance_error = 0
     #angle
     error = 0
     previous_error = 0
@@ -176,7 +179,12 @@ def drivetrain_straight(distance):
             pid_output = (kp * error) + (ki * integral) + (kd * derivative)
             previous_error = error
             pid_output = max(min(pid_output, max_speed), -max_speed)
-        max_speed = max(min(kp_d*distance_error, 50), 10)
+            
+        integral_d += distance_error
+        integral_d = max(min(integral_d, 30), -30)
+        derivative_d = distance_error - previous_distance_error
+        speed_pid_output = (kp_d * distance_error) + (ki_d * integral_d) + (kd_d * derivative_d)
+        max_speed = max(min(speed_pid_output, 80), 5)
         left_drive_smart.set_velocity(max_speed+pid_output, PERCENT)
         right_drive_smart.set_velocity(max_speed-pid_output, PERCENT)
         distance_error = distance - (rightwheel_rotation.angle()-leftwheel_rotation.angle())/720* math.Pi * 82.55
