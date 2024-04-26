@@ -25,6 +25,9 @@ right_drive_smart = MotorGroup(right_motor_a, right_motor_b, right_motor_c)
 drivetrain = DriveTrain(left_drive_smart, right_drive_smart, 299.24, 260, 230, MM, 0.6)
 
 # Sensor & Pneumatics
+inertial = Inertial(Ports.PORT20)
+leftwheel_rotation = Rotation(Ports.PORT19, False)
+rightwheel_rotation = Rotation(Ports.PORT18, False)
 
 # Variables initialisation
 left_drive_smart_stopped = 0
@@ -140,6 +143,41 @@ def drivetrain_turn(target_angle):
         pid_output = max(min(pid_output, 100), -100)
         drivetrain.set_turn_velocity(pid_output, PERCENT)
         current_angle = inertial.heading(DEGREES)
+    drivetrain.stop()
+
+# PID straight def
+def drivetrain_straight(distance):
+    #change kp, ki, kd, accoding to the robot
+    kp = 0.18
+    ki = 0.139
+    kd = 0.05
+    #distance
+    kp_d = 0.5
+    max_speed = 50
+    distance_error = distance - (rightwheel_rotation+leftwheel_rotation)/720* math.Pi * 82.55
+    #angle
+    error = 0
+    previous_error = 0
+    integral = 0
+    
+    left_drive_smart.set_velocity(max_speed, PERCENT)
+    right_drive_smart.set_velocity(max_speed, PERCENT)
+    left_drive_smart.spin(FORWARD)
+    right_drive_smart.spin(FORWARD)
+    drivetrain.set_stopping(HOLD)
+    while distance_error > 0.5:
+        while not (leftwheel_rotation == rightwheel_rotation):
+            error = leftwheel_rotation - rightwheel_rotation
+            integral += error
+            integral = max(min(integral, 30), -30)
+            derivative = error - previous_error
+            pid_output = (kp * error) + (ki * integral) + (kd * derivative)
+            previous_error = error
+            pid_output = max(min(pid_output, max_speed), -max_speed)
+        max_speed = max(min(kp_d*distance_error, 50), 10)
+        left_drive_smart.set_velocity(max_speed+pid_output, PERCENT)
+        right_drive_smart.set_velocity(max_speed-pid_output, PERCENT)
+        distance_error = distance - (rightwheel_rotation-leftwheel_rotation)/720* math.Pi * 82.55
     drivetrain.stop()
 
 # Autonomous def
