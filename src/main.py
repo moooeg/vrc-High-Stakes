@@ -159,6 +159,8 @@ def drivetrain_straight(distance):
     error = 0
     previous_error = 0
     integral = 0
+    leftwheel_rotation.set_position(0, DEGREES)
+    righttwheel_rotation.set_position(0, DEGREES)
     
     left_drive_smart.set_velocity(max_speed, PERCENT)
     right_drive_smart.set_velocity(max_speed, PERCENT)
@@ -166,8 +168,8 @@ def drivetrain_straight(distance):
     right_drive_smart.spin(FORWARD)
     drivetrain.set_stopping(HOLD)
     while distance_error > 0.5:
-        while not (leftwheel_rotation == rightwheel_rotation):
-            error = leftwheel_rotation - rightwheel_rotation
+        while not (leftwheel_rotation.angle() == rightwheel_rotation.angle()):
+            error = leftwheel_rotation.angle() - rightwheel_rotation.angle()
             integral += error
             integral = max(min(integral, 30), -30)
             derivative = error - previous_error
@@ -177,7 +179,7 @@ def drivetrain_straight(distance):
         max_speed = max(min(kp_d*distance_error, 50), 10)
         left_drive_smart.set_velocity(max_speed+pid_output, PERCENT)
         right_drive_smart.set_velocity(max_speed-pid_output, PERCENT)
-        distance_error = distance - (rightwheel_rotation-leftwheel_rotation)/720* math.Pi * 82.55
+        distance_error = distance - (rightwheel_rotation.angle()-leftwheel_rotation.angle())/720* math.Pi * 82.55
     drivetrain.stop()
 
 # Autonomous def
