@@ -17,12 +17,14 @@ controller_1 = Controller(PRIMARY)
 
 # Motors (A front, C back)
 left_motor_a = Motor(Ports.PORT1, GearSetting.RATIO_6_1, True)
-left_drive_smart = MotorGroup(left_motor_a, left_motor_b, left_motor_c)
-right_motor_a = Motor(Ports.PORT2, GearSetting.RATIO_6_1, False)
-right_drive_smart = MotorGroup(right_motor_a, right_motor_b, right_motor_c)
+left_motor_b = Motor(Ports.PORT2, GearSetting.RATIO_6_1, True)
+left_drive_smart = MotorGroup(left_motor_a, left_motor_b)
+right_motor_a = Motor(Ports.PORT3, GearSetting.RATIO_6_1, False)
+right_motor_a = Motor(Ports.PORT4, GearSetting.RATIO_6_1, False)
+right_drive_smart = MotorGroup(right_motor_a, right_motor_b)
 
 # Drivetrain
-drivetrain = DriveTrain(left_drive_smart, right_drive_smart, 299.24, 260, 230, MM, 0.6)
+drivetrain = DriveTrain(left_drive_smart, right_drive_smart, 299.24, 377.1, 304.8, MM, 5/3)
 
 # Sensor & Pneumatics
 inertial = Inertial(Ports.PORT20)
