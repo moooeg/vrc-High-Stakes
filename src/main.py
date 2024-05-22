@@ -16,13 +16,16 @@ brain=Brain()
 controller_1 = Controller(PRIMARY)
 
 # Motors (A front, C back)
-left_motor_a = Motor(Ports.PORT1, GearSetting.RATIO_6_1, True)
-left_motor_b = Motor(Ports.PORT2, GearSetting.RATIO_6_1, True)
+left_motor_a = Motor(Ports.PORT1, GearSetting.RATIO_18_1, False)
+left_motor_b = Motor(Ports.PORT2, GearSetting.RATIO_18_1, False)
 left_drive_smart = MotorGroup(left_motor_a, left_motor_b)
-right_motor_a = Motor(Ports.PORT3, GearSetting.RATIO_6_1, False)
-right_motor_a = Motor(Ports.PORT4, GearSetting.RATIO_6_1, False)
+right_motor_a = Motor(Ports.PORT3, GearSetting.RATIO_18_1, True)
+right_motor_b = Motor(Ports.PORT4, GearSetting.RATIO_18_1, True)
 right_drive_smart = MotorGroup(right_motor_a, right_motor_b)
 
+left_lift = Motor(Ports.PORT5, GearSetting.RATIO_18_1, False)
+right_lift = Motor(Ports.PORT6, GearSetting.RATIO_18_1, True)
+lift = MotorGroup(left_lift, right_lift)
 # Drivetrain
 drivetrain = DriveTrain(left_drive_smart, right_drive_smart, 299.24, 377.1, 304.8, MM, 5/3)
 
@@ -31,11 +34,14 @@ inertial = Inertial(Ports.PORT20)
 leftwheel_rotation = Rotation(Ports.PORT19, False)
 rightwheel_rotation = Rotation(Ports.PORT18, False)
 
+pto = DigitalOut(brain.three_wire_port.a)
+
 # Variables initialisation
 left_drive_smart_stopped = 0
 right_drive_smart_stopped = 0
 left_drive_smart_speed = 0
 right_drive_smart_speed = 0
+pto_status = 0 #0 drivebase, 1 lift
 
 # team and side choosing
 def team_choosing():
@@ -205,18 +211,23 @@ def driver_control():
     # Drive Train
         max_speed = 70
         rotate = max_speed*math.sin(((controller_1.axis4.position()**3)/636620))
+        forward = controller_1.axis3.position()
             
         left_drive_smart_speed = forward + rotate
         right_drive_smart_speed = forward - rotate
 
         if left_drive_smart_speed < 3 and left_drive_smart_speed > -3:
             if left_drive_smart_stopped:
+                if pto_status == 0:
+                    left_lift.stop()
                 left_drive_smart.stop()
                 left_drive_smart_stopped = 0
         else:
             left_drive_smart_stopped = 1
         if right_drive_smart_speed < 3 and right_drive_smart_speed > -3:
             if right_drive_smart_stopped:
+                if pto_status == 0:
+                    right_lift.stop()
                 right_drive_smart.stop()
                 right_drive_smart_stopped = 0
         else:
@@ -224,10 +235,21 @@ def driver_control():
 
         if left_drive_smart_stopped:
             left_drive_smart.set_velocity(left_drive_smart_speed, PERCENT)
+            if pto_status == 0:
+                    left_lift.set_velocity(left_drive_smart_speed, PERCENT)
+                    left_lift.spin(FORWARD)
             left_drive_smart.spin(FORWARD)
         if right_drive_smart_stopped:
+            if pto_status == 0:
+                    right_lift.set_velocity(left_drive_smart_speed, PERCENT)
+                    right_lift.spin(FORWARD)
             right_drive_smart.set_velocity(right_drive_smart_speed, PERCENT)
             right_drive_smart.spin(FORWARD)
+        
+        if controller_1.buttonA.pressing():
+            pto_status = 1
+            pto.set(pto_status)
+            
 
 #choose team
 team_position = team_choosing() 
