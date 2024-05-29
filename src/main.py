@@ -16,23 +16,25 @@ brain=Brain()
 controller_1 = Controller(PRIMARY)
 
 # Motors (A front, C back)
-left_motor_a = Motor(Ports.PORT1, GearSetting.RATIO_18_1, False)
-left_motor_b = Motor(Ports.PORT2, GearSetting.RATIO_18_1, False)
+left_motor_a = Motor(Ports.PORT1, GearSetting.RATIO_18_1, True)
+left_motor_b = Motor(Ports.PORT2, GearSetting.RATIO_18_1, True)
 left_drive_smart = MotorGroup(left_motor_a, left_motor_b)
-right_motor_a = Motor(Ports.PORT3, GearSetting.RATIO_18_1, True)
-right_motor_b = Motor(Ports.PORT4, GearSetting.RATIO_18_1, True)
+right_motor_a = Motor(Ports.PORT3, GearSetting.RATIO_18_1, False)
+right_motor_b = Motor(Ports.PORT4, GearSetting.RATIO_18_1, False)
 right_drive_smart = MotorGroup(right_motor_a, right_motor_b)
 
 left_lift = Motor(Ports.PORT5, GearSetting.RATIO_18_1, False)
 right_lift = Motor(Ports.PORT6, GearSetting.RATIO_18_1, True)
 lift = MotorGroup(left_lift, right_lift)
+
+intake = Motor(Ports.PORT7, GearSetting.RATIO_18_1, True)
 # Drivetrain
 drivetrain = DriveTrain(left_drive_smart, right_drive_smart, 299.24, 377.1, 304.8, MM, 5/3)
 
 # Sensor & Pneumatics
 inertial = Inertial(Ports.PORT20)
 leftwheel_rotation = Rotation(Ports.PORT19, False)
-rightwheel_rotation = Rotation(Ports.PORT18, False)
+rightwheel_rotation = Rotation(Ports.PORT18, True)
 
 pto = DigitalOut(brain.three_wire_port.a)
 
@@ -43,28 +45,29 @@ left_drive_smart_speed = 0
 right_drive_smart_speed = 0
 pto_status = 0 #0 drivebase, 1 lift
 
+brain.screen.draw_image_from_file( "begin.png", 0, 0)
 # team and side choosing
 def team_choosing():
     team = ""
     position = ""
     while True:
         if controller_1.buttonL1.pressing():
-            brain.screen.draw_image_from_file( "red_1_confirmed.png", 0, 4)
+            brain.screen.draw_image_from_file( "red_1_confirmed.png", 0, 0)
             while controller_1.buttonL1.pressing():
                 wait(5, MSEC)
             return "red_1"
         elif controller_1.buttonL2.pressing():
-            brain.screen.draw_image_from_file( "red_2_confirmed.png", 0, 4)
+            brain.screen.draw_image_from_file( "red_2_confirmed.png", 0, 0)
             while controller_1.buttonL2.pressing():
                 wait(5, MSEC)
             return "red_2"
         elif controller_1.buttonR1.pressing():
-            brain.screen.draw_image_from_file( "blue_1_confirmed.png", 0, 4)
+            brain.screen.draw_image_from_file( "blue_1_confirmed.png", 0, 0)
             while controller_1.buttonR1.pressing():
                 wait(5, MSEC)
             return "blue_1"
         elif controller_1.buttonR2.pressing():
-            brain.screen.draw_image_from_file( "blue_2_confirmed.png", 0, 4)
+            brain.screen.draw_image_from_file( "blue_2_confirmed.png", 0, 0)
             while controller_1.buttonR2.pressing():
                 wait(5, MSEC)
             return "blue_2"
@@ -73,7 +76,7 @@ def team_choosing():
             if 139 <= brain.screen.x_position() <= 240:
                 # Red
                 team = "red"
-                brain.screen.draw_image_from_file( "red_begin.png", 0, 4)
+                brain.screen.draw_image_from_file( "red_begin.png", 0, 0)
                 position = ""
             elif 249 <= brain.screen.x_position() <= 351:
                 # Blue
@@ -90,7 +93,7 @@ def team_choosing():
             if brain.screen.y_position() > 52 and brain.screen.y_position() < 73:
                 if team == "red":
                     # Red 1
-                    brain.screen.draw_image_from_file( "red_1.png", 0, 4)
+                    brain.screen.draw_image_from_file( "red_1.png", 0, 0)
                 elif team == "blue":
                     # Blue 1
                     brain.screen.draw_image_from_file( "blue_1.png", 0, 0)
@@ -102,7 +105,7 @@ def team_choosing():
             elif brain.screen.pressing() and 85 <= brain.screen.y_position() <= 107 and not team == "":
                 if team == "red":
                     # Red 2
-                    brain.screen.draw_image_from_file( "red_2.png", 0, 4)
+                    brain.screen.draw_image_from_file( "red_2.png", 0, 0)
                 elif team == "blue":
                     # Blue 2
                     brain.screen.draw_image_from_file( "blue_2.png", 0, 0)
@@ -112,10 +115,10 @@ def team_choosing():
                     # Red confirm
                     if position == "1":
                         # Red 1 confirm
-                        brain.screen.draw_image_from_file( "red_1_confirmed.png", 0, 4)
+                        brain.screen.draw_image_from_file( "red_1_confirmed.png", 0, 0)
                     elif position == "2":
                         # Red 2 confirm
-                        brain.screen.draw_image_from_file( "red_2_confirmed.png", 0, 4)
+                        brain.screen.draw_image_from_file( "red_2_confirmed.png", 0, 0)
                 elif team == "blue":
                     # Blue confirm
                     if position == "1":
@@ -204,7 +207,7 @@ def autonomous():
 
 #  Driver Control def
 def driver_control():
-    global left_drive_smart_stopped, right_drive_smart_stopped
+    global left_drive_smart_stopped, right_drive_smart_stopped, pto_status
     drivetrain.set_stopping(COAST)
     # Process every 20 milliseconds
     while True:
@@ -247,8 +250,14 @@ def driver_control():
             right_drive_smart.spin(FORWARD)
         
         if controller_1.buttonA.pressing():
-            pto_status = 1
+            pto_status = not pto_status
             pto.set(pto_status)
+            left_lift.stop()
+            right_lift.stop()
+            while controller_1.buttonA.pressing():
+                wait(20, MSEC)
+        if controller_1.buttonL1.pressing():
+            intake.spin(forward)
             
 
 #choose team
