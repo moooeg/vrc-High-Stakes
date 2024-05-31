@@ -1,6 +1,5 @@
 # Library imports
 from vex import *
-
 # ------------------------
 # Code by Eric & Peter (mostly Eric)
 # Team 75477M 'Frij'
@@ -252,8 +251,11 @@ def driver_control():
         if controller_1.buttonA.pressing():
             pto_status = not pto_status
             pto.set(pto_status)
-            left_lift.stop()
-            right_lift.stop()
+            lift.stop()
+            if pto_status == 1:
+                lift.set_stopping(HOLD)
+            else:
+                lift.set_stopping(COAST)
             while controller_1.buttonA.pressing():
                 wait(20, MSEC)
         if controller_1.buttonL1.pressing():
