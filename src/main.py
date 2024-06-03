@@ -258,8 +258,12 @@ def driver_control():
                 lift.set_stopping(COAST)
             while controller_1.buttonA.pressing():
                 wait(20, MSEC)
+                
         if controller_1.buttonL1.pressing():
-            intake.spin(forward)
+            intake.spin(forward, 100, PERCENT)
+        else:
+            intake.stop()
+        
             
 
 #choose team
