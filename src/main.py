@@ -26,14 +26,14 @@ left_lift = Motor(Ports.PORT5, GearSetting.RATIO_18_1, False)
 right_lift = Motor(Ports.PORT6, GearSetting.RATIO_18_1, True)
 lift = MotorGroup(left_lift, right_lift)
 
-intake = Motor(Ports.PORT7, GearSetting.RATIO_18_1, True)
+intake = Motor(Ports.PORT7, GearSetting.RATIO_6_1, True)
 # Drivetrain
 drivetrain = DriveTrain(left_drive_smart, right_drive_smart, 299.24, 377.1, 304.8, MM, 5/3)
 
 # Sensor & Pneumatics
 inertial = Inertial(Ports.PORT20)
 leftwheel_rotation = Rotation(Ports.PORT19, False)
-rightwheel_rotation = Rotation(Ports.PORT18, True)
+lift_rotation = Rotation(Ports.PORT18, False)
 
 pto = DigitalOut(brain.three_wire_port.a)
 
@@ -211,7 +211,7 @@ def driver_control():
     # Process every 20 milliseconds
     while True:
     # Drive Train
-        max_speed = 70
+        max_speed = 80
         rotate = max_speed*math.sin(((controller_1.axis4.position()**3)/636620))
         forward = controller_1.axis3.position()
             
@@ -249,21 +249,37 @@ def driver_control():
             right_drive_smart.spin(FORWARD)
         
         if controller_1.buttonA.pressing():
-            pto_status = not pto_status
+            lift_rotation.set_position(0, DEGREES)
+            pto_status = 1
             pto.set(pto_status)
             lift.stop()
-            if pto_status == 1:
-                lift.set_stopping(HOLD)
-            else:
-                lift.set_stopping(COAST)
-            while controller_1.buttonA.pressing():
-                wait(20, MSEC)
+            lift.set_stopping(HOLD)
+            while lift_rotation <85:
+                lift.spin(FORWARD, 100, PERCENT)
+            lift.stop()
+        if controller_1.buttonB.pressing():
+            lift_rotation.set_position(85, DEGREES)
+            lift.set_stopping(COAST)
+            while lift_rotation > 0:
+                lift.spin(REVERSE, 100, PERCENT)
+            lift.stop()
+            pto_status = 0
+            pto.set(pto_status)
                 
-        if controller_1.buttonL1.pressing():
-            intake.spin(forward, 100, PERCENT)
+        if controller_1.buttonR1.pressing():
+            intake.spin(FORWARD, 100, PERCENT)
         else:
             intake.stop()
         
+        #testing code
+        if controller_1.buttonL1.pressing():
+            lift.spin(FORWARD, 100, PERCENT)
+        else:
+            lift.stop()
+        if controller_1.buttonL2.pressing():
+            lift.spin(REVERSE, 100, PERCENT)
+        else:
+            lift.stop()
             
 
 #choose team
