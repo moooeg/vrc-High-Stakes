@@ -26,7 +26,7 @@ left_lift = Motor(Ports.PORT5, GearSetting.RATIO_18_1, False)
 right_lift = Motor(Ports.PORT6, GearSetting.RATIO_18_1, True)
 lift = MotorGroup(left_lift, right_lift)
 
-intake = Motor(Ports.PORT7, GearSetting.RATIO_6_1, True)
+intake = Motor(Ports.PORT7, GearSetting.RATIO_6_1, False)
 # Drivetrain
 drivetrain = DriveTrain(left_drive_smart, right_drive_smart, 299.24, 377.1, 304.8, MM, 5/3)
 
@@ -211,7 +211,7 @@ def driver_control():
     # Process every 20 milliseconds
     while True:
     # Drive Train
-        max_speed = 80
+        max_speed = 70
         rotate = max_speed*math.sin(((controller_1.axis4.position()**3)/636620))
         forward = controller_1.axis3.position()
             
@@ -274,9 +274,8 @@ def driver_control():
         #testing code
         if controller_1.buttonL1.pressing():
             lift.spin(FORWARD, 100, PERCENT)
-        else:
-            lift.stop()
-        if controller_1.buttonL2.pressing():
+        
+        elif controller_1.buttonL2.pressing():
             lift.spin(REVERSE, 100, PERCENT)
         else:
             lift.stop()
