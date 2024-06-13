@@ -44,7 +44,7 @@ left_drive_smart_speed = 0
 right_drive_smart_speed = 0
 pto_status = 0 #0 drivebase, 1 lift
 
-brain.screen.draw_image_from_file( "begin.png", 0, 0)
+brain.screen.draw_image_from_file("begin.png", 0, 0)
 # team and side choosing
 def team_choosing():
     team = ""
@@ -254,20 +254,22 @@ def driver_control():
             pto.set(pto_status)
             lift.stop()
             lift.set_stopping(HOLD)
-            while lift_rotation <85:
+            while lift_rotation < 510:
                 lift.spin(FORWARD, 100, PERCENT)
             lift.stop()
         if controller_1.buttonB.pressing():
-            lift_rotation.set_position(85, DEGREES)
+            lift_rotation.set_position(510, DEGREES)
             lift.set_stopping(COAST)
             while lift_rotation > 0:
                 lift.spin(REVERSE, 100, PERCENT)
             lift.stop()
             pto_status = 0
-            pto.set(pto_status)
-                
+            pto.set(pto_status)    
+        
         if controller_1.buttonR1.pressing():
             intake.spin(FORWARD, 100, PERCENT)
+        elif controller_1.buttonR2.pressing():
+            intake.spin(REVERSE, 100, PERCENT)
         else:
             intake.stop()
         
@@ -279,7 +281,15 @@ def driver_control():
             lift.spin(REVERSE, 100, PERCENT)
         else:
             lift.stop()
-            
+        
+        if controller_1.buttonY.pressing():
+            pto_status = not pto_status
+            pto.set(pto_status)
+            lift.stop()
+            if pto_status == 1:
+                lift.set_stopping(HOLD)
+            else:
+                lift.set_stopping(COAST)
 
 #choose team
 team_position = team_choosing() 
