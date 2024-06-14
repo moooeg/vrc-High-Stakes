@@ -299,6 +299,9 @@ def driver_control():
                 lift.set_stopping(HOLD)
             else:
                 lift.set_stopping(COAST)
+        while controller_1.buttonY.pressing():
+            wait(10, MSEC)
+                
 
 #choose team
 team_position = team_choosing() 
