@@ -216,7 +216,7 @@ def driver_control():
         #arcade drive
         max_speed = 70
         rotate = max_speed*math.sin(((controller_1.axis4.position()**3)/636620))
-        forward = controller_1.axis3.position()
+        forward = 100*math.sin(((controller_1.axis3.position()**3)/636620))
             
         left_drive_smart_speed = forward + rotate
         right_drive_smart_speed = forward - rotate
