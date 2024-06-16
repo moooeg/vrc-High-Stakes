@@ -223,8 +223,8 @@ def driver_control():
         
         #tank
         '''
-        left_drive_smart_speed = controller_1.axis3.position()
-        right_drive_smart_speed = controller_1.axis1.position()
+        left_drive_smart_speed = 100*math.sin(((controller_1.axis3.position()**3)/636620))
+        right_drive_smart_speed = 100*math.sin(((controller_1.axis1.position()**3)/636620))
         '''
 
         if left_drive_smart_speed < 3 and left_drive_smart_speed > -3:
