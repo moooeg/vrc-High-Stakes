@@ -13,6 +13,7 @@ brain=Brain()
 
 # Controllers
 controller_1 = Controller(PRIMARY)
+controller_2 = Controller(PARTNER)
 
 # Motors (A front, C back)
 left_motor_a = Motor(Ports.PORT1, GearSetting.RATIO_18_1, True)
