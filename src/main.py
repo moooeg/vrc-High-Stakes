@@ -204,7 +204,10 @@ def drivetrain_straight(distance):
 
 # Autonomous def
 def autonomous():
-    pass
+    if team_position == "red_1" or team_position == "blue_1":
+        pass
+    if team_position == "red_2" or team_position == "blue_2":
+        pass
 
 #  Driver Control def
 def driver_control():
