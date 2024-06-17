@@ -36,6 +36,7 @@ leftwheel_rotation = Rotation(Ports.PORT19, False)
 lift_rotation = Rotation(Ports.PORT18, False)
 
 pto = DigitalOut(brain.three_wire_port.a)
+clamp = DigitalOut(brain.three_wire_port.b)
 
 # Variables initialisation
 left_drive_smart_stopped = 0
@@ -43,6 +44,7 @@ right_drive_smart_stopped = 0
 left_drive_smart_speed = 0
 right_drive_smart_speed = 0
 pto_status = 0 #0 drivebase, 1 lift
+clamp_status = 0 #0 release, 1 clamp
 
 brain.screen.draw_image_from_file("begin.png", 0, 0)
 # team and side choosing
@@ -214,10 +216,11 @@ def driver_control():
         pto.set(pto_status)
     # Drive Train
         #arcade drive
+        
         max_speed = 70
-        rotate = max_speed*math.sin(((controller_1.axis4.position()**3)/636620))
+        rotate = max_speed*math.sin(((controller_1.axis2.position()**3)/636620))
         forward = 100*math.sin(((controller_1.axis3.position()**3)/636620))
-            
+
         left_drive_smart_speed = forward + rotate
         right_drive_smart_speed = forward - rotate
         
@@ -257,36 +260,46 @@ def driver_control():
             right_drive_smart.set_velocity(right_drive_smart_speed, PERCENT)
             right_drive_smart.spin(FORWARD)
         
-        if controller_1.buttonA.pressing():
-            lift_rotation.set_position(0, DEGREES)
-            pto_status = 1
-            pto.set(pto_status)
-            lift.stop()
-            lift.set_stopping(HOLD)
-            while lift_rotation < 510:
-                lift.spin(FORWARD, 100, PERCENT)
-            lift.stop()
-        if controller_1.buttonB.pressing():
-            lift_rotation.set_position(510, DEGREES)
-            lift.set_stopping(COAST)
-            while lift_rotation > 0:
-                lift.spin(REVERSE, 100, PERCENT)
-            lift.stop()
-            pto_status = 0
-            pto.set(pto_status)    
-        
         if controller_1.buttonR1.pressing():
             intake.spin(FORWARD, 100, PERCENT)
         elif controller_1.buttonR2.pressing():
             intake.spin(REVERSE, 100, PERCENT)
         else:
             intake.stop()
-        
-        #testing code
+            
         if controller_1.buttonL1.pressing():
+            if pto_status == 0:
+                lift_rotation.set_position(0, DEGREES)
+                pto_status = 1
+                pto.set(pto_status)
+                lift.stop()
+                lift.set_stopping(HOLD)
+                while lift_rotation < 510:
+                    lift.spin(FORWARD, 100, PERCENT)
+                lift.stop()
+            elif pto_status == 1:
+                lift_rotation.set_position(510, DEGREES)
+                lift.set_stopping(COAST)
+                while lift_rotation > 0:
+                    lift.spin(REVERSE, 100, PERCENT)
+                lift.stop()
+                pto_status = 0
+                pto.set(pto_status)  
+            while controller_1.buttonL1.pressing():
+                wait(30, MSEC)
+            
+        if controller_1.buttonL2.pressing():
+            clamp_status = not clamp_status
+            clamp.set(clamp_status)
+            while controller_1.buttonL2.pressing():
+                wait(30, MSEC)
+            
+            
+        #testing code
+        if controller_1.buttonB.pressing():
             lift.spin(FORWARD, 100, PERCENT)
         
-        elif controller_1.buttonL2.pressing():
+        elif controller_1.buttonA.pressing():
             lift.spin(REVERSE, 100, PERCENT)
         else:
             lift.stop()
@@ -299,8 +312,8 @@ def driver_control():
                 lift.set_stopping(HOLD)
             else:
                 lift.set_stopping(COAST)
-        while controller_1.buttonY.pressing():
-            wait(10, MSEC)
+            while controller_1.buttonY.pressing():
+                wait(30, MSEC)
                 
 
 #choose team
