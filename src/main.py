@@ -220,19 +220,12 @@ def driver_control():
         pto.set(pto_status)
     # Drive Train
         #arcade drive
-        
         max_speed = 70
-        rotate = max_speed*math.sin(((controller_1.axis2.position()**3)/636620))
+        rotate = max_speed*0.01*controller_1.axis1.position()
         forward = 100*math.sin(((controller_1.axis3.position()**3)/636620))
 
         left_drive_smart_speed = forward + rotate
         right_drive_smart_speed = forward - rotate
-        
-        #tank
-        '''
-        left_drive_smart_speed = 100*math.sin(((controller_1.axis3.position()**3)/636620))
-        right_drive_smart_speed = 100*math.sin(((controller_1.axis1.position()**3)/636620))
-        '''
 
         if left_drive_smart_speed < 3 and left_drive_smart_speed > -3:
             if left_drive_smart_stopped:
