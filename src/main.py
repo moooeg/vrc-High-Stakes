@@ -221,7 +221,7 @@ def driver_control():
     # Drive Train
         #arcade drive
         max_speed = 70
-        rotate = max_speed*0.01*controller_1.axis1.position()
+        rotate = max_speed*controller_1.axis1.position()/100
         forward = 100*math.sin(((controller_1.axis3.position()**3)/636620))
 
         left_drive_smart_speed = forward + rotate
@@ -252,7 +252,7 @@ def driver_control():
             left_drive_smart.spin(FORWARD)
         if right_drive_smart_stopped:
             if pto_status == 0:
-                    right_lift.set_velocity(left_drive_smart_speed, PERCENT)
+                    right_lift.set_velocity(right_drive_smart_speed, PERCENT)
                     right_lift.spin(FORWARD)
             right_drive_smart.set_velocity(right_drive_smart_speed, PERCENT)
             right_drive_smart.spin(FORWARD)
@@ -293,13 +293,14 @@ def driver_control():
             
             
         #testing code
-        if controller_1.buttonB.pressing():
-            lift.spin(FORWARD, 100, PERCENT)
-        
-        elif controller_1.buttonA.pressing():
-            lift.spin(REVERSE, 100, PERCENT)
-        else:
-            lift.stop()
+        if pto_status == 1:
+            if controller_1.buttonB.pressing():
+                lift.spin(FORWARD, 100, PERCENT)
+            
+            elif controller_1.buttonA.pressing():
+                lift.spin(REVERSE, 100, PERCENT)
+            else:
+                lift.stop()
         
         if controller_1.buttonY.pressing():
             pto_status = not pto_status
