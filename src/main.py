@@ -46,6 +46,7 @@ left_drive_smart_speed = 0
 right_drive_smart_speed = 0
 pto_status = 0 #0 drivebase, 1 lift
 clamp_status = 0 #0 release, 1 clamp
+lift_status = 0
 
 brain.screen.draw_image_from_file("begin.png", 0, 0)
 # team and side choosing
@@ -212,7 +213,7 @@ def autonomous():
 
 #  Driver Control def
 def driver_control():
-    global left_drive_smart_stopped, right_drive_smart_stopped, pto_status, clamp_status
+    global left_drive_smart_stopped, right_drive_smart_stopped, pto_status, clamp_status, lift_status
     drivetrain.set_stopping(COAST)
     # Process every 20 milliseconds
     while True:
@@ -265,25 +266,29 @@ def driver_control():
             intake.stop()
             
         if controller_1.buttonL1.pressing():
-            if pto_status == 0:
-                pto_status = 1
-                pto.set(pto_status)
-                lift.stop()
-                lift.set_stopping(HOLD)
-                lift_rotation.set_position(0, DEGREES)
-                while lift_rotation.rotate() < 510:
+            if lift_status == 0:
+                if pto_status == 0:
+                    pto_status = 1
+                    pto.set(pto_status)
+                    lift_status = "up"
+                    lift.stop()
+                    lift.set_stopping(HOLD)
+                    lift_rotation.set_position(0, DEGREES)
                     lift.spin(FORWARD, 100, PERCENT)
-                lift.stop()
-            elif pto_status == 1:
-                lift_rotation.set_position(510, DEGREES)
-                lift.set_stopping(COAST)
-                while lift_rotation.rotate() > 0:
-                    lift.spin(REVERSE, 100, PERCENT)
-                lift.stop()
-                pto_status = 0
-                pto.set(pto_status)  
+                elif pto_status == 1:
+                    lift_status = "down"
+                    lift_rotation.set_position(510, DEGREES)
+                    lift.set_stopping(COAST)
+                    while lift_rotation.rotate() > 0:
+                        lift.spin(REVERSE, 100, PERCENT)
+                    lift.stop()
+                    pto_status = 0
+                    pto.set(pto_status)  
             while controller_1.buttonL1.pressing():
                 wait(30, MSEC)
+        if (lift_status == "up" and lift_rotation.rotate() > 510) or (lift_status == "down" and lift_rotation.rotate() < 0):
+            lift.stop()
+            lift_status = 0
             
         if controller_1.buttonL2.pressing():
             clamp_status = not clamp_status
