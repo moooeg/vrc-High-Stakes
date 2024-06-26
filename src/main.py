@@ -279,16 +279,18 @@ def driver_control():
                     lift_status = "down"
                     lift_rotation.set_position(510, DEGREES)
                     lift.set_stopping(COAST)
-                    while lift_rotation.rotate() > 0:
-                        lift.spin(REVERSE, 100, PERCENT)
+                    lift.spin(REVERSE, 100, PERCENT)
                     lift.stop()
-                    pto_status = 0
-                    pto.set(pto_status)  
             while controller_1.buttonL1.pressing():
                 wait(30, MSEC)
-        if (lift_status == "up" and lift_rotation.rotate() > 510) or (lift_status == "down" and lift_rotation.rotate() < 0):
+        if lift_status == "up" and lift_rotation.rotate() > 510:
             lift.stop()
             lift_status = 0
+        if lift_status == "down" and lift_rotation.rotate() < 0:
+            lift.stop()
+            lift_status = 0
+            pto_status = 0
+            pto.set(pto_status)
             
         if controller_1.buttonL2.pressing():
             clamp_status = not clamp_status
