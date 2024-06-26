@@ -212,7 +212,7 @@ def autonomous():
 
 #  Driver Control def
 def driver_control():
-    global left_drive_smart_stopped, right_drive_smart_stopped, pto_status
+    global left_drive_smart_stopped, right_drive_smart_stopped, pto_status, clamp_status
     drivetrain.set_stopping(COAST)
     # Process every 20 milliseconds
     while True:
@@ -266,18 +266,18 @@ def driver_control():
             
         if controller_1.buttonL1.pressing():
             if pto_status == 0:
-                lift_rotation.set_position(0, DEGREES)
                 pto_status = 1
                 pto.set(pto_status)
                 lift.stop()
                 lift.set_stopping(HOLD)
-                while lift_rotation < 510:
+                lift_rotation.set_position(0, DEGREES)
+                while lift_rotation.rotate() < 510:
                     lift.spin(FORWARD, 100, PERCENT)
                 lift.stop()
             elif pto_status == 1:
                 lift_rotation.set_position(510, DEGREES)
                 lift.set_stopping(COAST)
-                while lift_rotation > 0:
+                while lift_rotation.rotate() > 0:
                     lift.spin(REVERSE, 100, PERCENT)
                 lift.stop()
                 pto_status = 0
@@ -295,10 +295,10 @@ def driver_control():
         #testing code
         if pto_status == 1:
             if controller_1.buttonB.pressing():
-                lift.spin(FORWARD, 100, PERCENT)
+                lift.spin(REVERSE, 100, PERCENT)
             
             elif controller_1.buttonA.pressing():
-                lift.spin(REVERSE, 100, PERCENT)
+                lift.spin(FORWARD, 100, PERCENT)
             else:
                 lift.stop()
         
