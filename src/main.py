@@ -36,6 +36,8 @@ inertial = Inertial(Ports.PORT20)
 leftwheel_rotation = Rotation(Ports.PORT19, False)
 lift_rotation = Rotation(Ports.PORT18, False)
 
+lift_rotation.set_position(0, DEGREES)
+
 pto = DigitalOut(brain.three_wire_port.a)
 clamp = DigitalOut(brain.three_wire_port.b)
 
@@ -270,26 +272,26 @@ def driver_control():
                 if pto_status == 0:
                     pto_status = 1
                     pto.set(pto_status)
+                    wait(500, MSEC)
                     lift_status = "up"
                     lift.stop()
                     lift.set_stopping(HOLD)
-                    lift_rotation.set_position(0, DEGREES)
                     lift.spin(FORWARD, 100, PERCENT)
                 elif pto_status == 1:
                     lift_status = "down"
-                    lift_rotation.set_position(510, DEGREES)
-                    lift.set_stopping(COAST)
                     lift.spin(REVERSE, 100, PERCENT)
-                    lift.stop()
             while controller_1.buttonL1.pressing():
                 wait(30, MSEC)
-        if lift_status == "up" and lift_rotation.position(TURNS) > -1.5:
+
+        if lift_status == "up" and lift_rotation.position(TURNS) < -1.3-0.3:
             lift.stop()
             lift_status = 0
-        if lift_status == "down" and lift_rotation.position(TURNS) < -0.05:
+        if lift_status == "down" and lift_rotation.position(TURNS) > 0:
             lift.stop()
             lift_status = 0
             pto_status = 0
+            lift.set_stopping(COAST)
+            wait(200, MSEC)
             pto.set(pto_status)
             
         if controller_1.buttonL2.pressing():
@@ -300,6 +302,7 @@ def driver_control():
             
             
         #testing code
+        '''
         if pto_status == 1:
             if controller_1.buttonB.pressing():
                 lift.spin(REVERSE, 100, PERCENT)
@@ -319,7 +322,7 @@ def driver_control():
                 lift.set_stopping(COAST)
             while controller_1.buttonY.pressing():
                 wait(30, MSEC)
-                
+        '''  
 
 #choose team
 team_position = team_choosing() 
