@@ -283,10 +283,10 @@ def driver_control():
                     lift.stop()
             while controller_1.buttonL1.pressing():
                 wait(30, MSEC)
-        if lift_status == "up" and lift_rotation.rotate() > 510:
+        if lift_status == "up" and lift_rotation.position(TURNS) > -1.5:
             lift.stop()
             lift_status = 0
-        if lift_status == "down" and lift_rotation.rotate() < 0:
+        if lift_status == "down" and lift_rotation.position(TURNS) < -0.05:
             lift.stop()
             lift_status = 0
             pto_status = 0
