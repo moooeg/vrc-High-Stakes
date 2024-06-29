@@ -3,9 +3,19 @@ from vex import *
 # ------------------------
 # Code by Eric & Peter (mostly Eric)
 # Team 75477M 'Frij'
-# ... 2024-2025
+# High Stakes 2024-2025
 # ------------------------
 # Wiring Guide
+# left drivebase motors: 1, 2
+# right drivebase motors: 3, 4
+# lift: left 5, right 6
+# intake: 7
+#
+# inertial: 20
+# lift rotation: 18
+#
+# PTO: A
+# goal clamp: B
 
 
 # Brain
@@ -33,7 +43,6 @@ drivetrain = DriveTrain(left_drive_smart, right_drive_smart, 299.24, 377.1, 304.
 
 # Sensor & Pneumatics
 inertial = Inertial(Ports.PORT20)
-leftwheel_rotation = Rotation(Ports.PORT19, False)
 lift_rotation = Rotation(Ports.PORT18, False)
 
 lift_rotation.set_position(0, DEGREES)
