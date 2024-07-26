@@ -174,8 +174,36 @@ def drivetrain_turn(target_angle):
 # Autonomous def
 def autonomous():
     if team_position == "red_1" or team_position == "blue_1":
-        pass
+        drivetrain.drive(REVERSE, 80, PERCENT)
+        wait(1, SECONDS)
+        drivetrain.stop()
+        clamp_status = 1
+        clamp.set(clamp_status)
+        intake.spin(FORWARD, 100, PERCENT)
+        wait(0.45, SECONDS)
+        drivetrain.turn(LEFT, 45, PERCENT)
+        wait(0.8, SECONDS)
+        drivetrain.stop()
+        wait(0.5, SECONDS)
+        drivetrain.drive(FORWARD, 80, PERCENT)
+        wait(1, SECONDS)
+        drivetrain.stop()
+        wait(0.5, SECONDS)
+        drivetrain.drive(REVERSE, 90, PERCENT)
+        wait(1, SECONDS)
+        drivetrain.stop()
+        wait(0.5, SECONDS)
+        drivetrain.turn(LEFT, 80, PERCENT)
+        wait(0.8, SECONDS)
+        drivetrain.drive(FORWARD, 50, PERCENT)
+        wait(1, SECONDS)
+        drivetrain.stop()
+        intake.stop()
+
+        
     if team_position == "red_2" or team_position == "blue_2":
+        pass
+    if team_position == "skill":
         pass
 
 #  Driver Control def
@@ -231,7 +259,7 @@ def driver_control():
             intake.spin(REVERSE, 100, PERCENT)
         else:
             intake.stop()
-            
+        '''    
         if controller_1.buttonL1.pressing():
             if lift_status == 0:
                 if pto_status == 0:
@@ -258,7 +286,7 @@ def driver_control():
             lift.set_stopping(COAST)
             wait(200, MSEC)
             pto.set(pto_status)
-            
+        '''
         if controller_1.buttonL2.pressing():
             clamp_status = not clamp_status
             clamp.set(clamp_status)
@@ -267,7 +295,7 @@ def driver_control():
             
             
         #testing code
-        '''
+        
         if pto_status == 1:
             if controller_1.buttonB.pressing():
                 lift.spin(REVERSE, 100, PERCENT)
@@ -287,7 +315,7 @@ def driver_control():
                 lift.set_stopping(COAST)
             while controller_1.buttonY.pressing():
                 wait(30, MSEC)
-        '''  
+        
 
 #choose team
 team_position = team_choosing() 
