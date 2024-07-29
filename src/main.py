@@ -179,6 +179,10 @@ def autonomous():
         drivetrain.stop()
         clamp_status = 1
         clamp.set(clamp_status)
+        drivetrain.drive(REVERSE, 65, PERCENT)
+        wait(0.5, SECONDS)
+        drivetrain.drive(FORWARD, 30, PERCENT)
+        wait(0.5, SECONDS)
         intake.spin(FORWARD, 100, PERCENT)
         wait(0.45, SECONDS)
         drivetrain.turn(LEFT, 45, PERCENT)
@@ -195,10 +199,16 @@ def autonomous():
         wait(0.5, SECONDS)
         drivetrain.turn(LEFT, 80, PERCENT)
         wait(0.8, SECONDS)
+        intake.stop()
         drivetrain.drive(FORWARD, 50, PERCENT)
         wait(1, SECONDS)
         drivetrain.stop()
-        intake.stop()
+        drivetrain.turn(LEFT, 30, PERCENT)
+        wait(0.5, SECONDS)
+        drivetrain.drive(FORWARD, 50, PERCENT)
+        wait(0.5, SECONDS)
+        drivetrain.stop()
+        
 
         
     if team_position == "red_2" or team_position == "blue_2":
