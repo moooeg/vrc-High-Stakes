@@ -211,6 +211,8 @@ def autonomous():
         drivetrain.drive(FORWARD, 50, PERCENT)
         wait(0.5, SECONDS)
         drivetrain.stop()
+        clamp_status = 0
+        clamp.set(clamp_status)
         
 
         
