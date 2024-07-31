@@ -37,7 +37,10 @@ left_lift = Motor(Ports.PORT5, GearSetting.RATIO_18_1, False)
 right_lift = Motor(Ports.PORT6, GearSetting.RATIO_18_1, True)
 lift = MotorGroup(left_lift, right_lift)
 
-intake = Motor(Ports.PORT7, GearSetting.RATIO_6_1, False)
+intake_1 = Motor(Ports.PORT7, GearSetting.RATIO_6_1, False)
+intake_2 = Motor(Ports.PORT8, GearSetting.RATIO_6_1, True)
+intake = MotorGroup(intake_1, intake_2)
+
 # Drivetrain
 drivetrain = DriveTrain(left_drive_smart, right_drive_smart, 299.24, 377.1, 304.8, MM, 5/3)
 
@@ -329,5 +332,5 @@ def driver_control():
 
 #choose team
 team_position = team_choosing() 
-# Competition functions for the driver control & autonomous tasks
+# Compe tition functions for the driver control & autonomous tasks
 competition = Competition(driver_control, autonomous)
