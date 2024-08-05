@@ -213,13 +213,57 @@ def autonomous():
         drivetrain.stop()
         clamp_status = 0
         clamp.set(clamp_status)
-        
 
-        
     if team_position == "red_2" or team_position == "blue_2":
         pass
     if team_position == "skill":
-        pass
+        #clamp first goal
+        drivetrain.drive(REVERSE, 80, PERCENT)
+        wait(0.5, SECONDS)
+        clamp.set(True)
+        drivetrain.stop()
+        wait(0.5, SECONDS)
+        #turn 180
+        intake.spin(FORWARD, 100, PERCENT)
+        drivetrain.turn(LEFT, 45, PERCENT)
+        wait(1, SECONDS)
+        drivetrain.stop() 
+        wait(0.5, SECONDS)
+        #get ring behind goal
+        drivetrain.drive(FORWARD, 80, PERCENT)
+        wait(0.5, SECONDS)
+        drivetrain.stop()
+        wait(0.5, SECONDS)
+        #turn right 90
+        drivetrain.turn(RIGHT, 45, PERCENT)
+        wait(1, SECONDS)
+        drivetrain.stop()
+        wait(0.5, SECONDS)
+        #get second ring
+        drivetrain.drive(FORWARD, 80, PERCENT)
+        wait(0.5, SECONDS)
+        drivetrain.stop()
+        wait(0.5, SECONDS)
+        #turn right 90
+        drivetrain.turn(RIGHT, 45, PERCENT)
+        wait(1, SECONDS)
+        drivetrain.stop()
+        wait(0.5, SECONDS)
+        #get two rings in the cornor
+        drivetrain.drive(FORWARD, 80, PERCENT)
+        wait(0.5, SECONDS)
+        drivetrain.stop()
+        wait(0.5, SECONDS)
+        #turn right 90
+        drivetrain.turn(RIGHT, 45, PERCENT)
+        wait(1, SECONDS)
+        drivetrain.stop()
+        wait(0.5, SECONDS)
+        #reverse, release the goal
+        drivetrain.drive(REVERSE, 40, PERCENT)
+        wait(0.5, SECONDS)
+        drivetrain.stop()
+        clamp.set(False)
 
 #  Driver Control def
 def driver_control():
@@ -231,7 +275,7 @@ def driver_control():
         pto.set(pto_status)
     # Drive Train
         #arcade drive
-        max_speed = 70
+        max_speed = 65
         rotate = max_speed*controller_1.axis1.position()/100
         forward = 100*math.sin(((controller_1.axis3.position()**3)/636620))
 
@@ -325,8 +369,10 @@ def driver_control():
             pto.set(pto_status)
             lift.stop()
             if pto_status == 1:
+                controller_1.rumble("-")
                 lift.set_stopping(HOLD)
             else:
+                controller_1.rumble(".")
                 lift.set_stopping(COAST)
             while controller_1.buttonY.pressing():
                 wait(30, MSEC)
