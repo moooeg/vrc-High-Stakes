@@ -176,7 +176,7 @@ def drivetrain_turn(target_angle):
 
 # Autonomous def
 def autonomous():
-    if team_position == "red_1" or team_position == "blue_1":
+    if team_position == "red_1":
         drivetrain.drive(REVERSE, 80, PERCENT)
         wait(1, SECONDS)
         drivetrain.stop()
@@ -213,65 +213,59 @@ def autonomous():
         drivetrain.stop()
         clamp_status = 0
         clamp.set(clamp_status)
+        
+    if team_position == "blue_1":
+        drivetrain.drive(REVERSE, 80, PERCENT)
+        wait(1, SECONDS)
+        drivetrain.stop()
+        clamp_status = 1
+        clamp.set(clamp_status)
+        drivetrain.drive(REVERSE, 65, PERCENT)
+        wait(0.5, SECONDS)
+        drivetrain.drive(FORWARD, 30, PERCENT)
+        wait(0.5, SECONDS)
+        intake.spin(FORWARD, 100, PERCENT)
+        wait(0.45, SECONDS)
+        drivetrain.turn(RIGHT, 45, PERCENT)
+        wait(0.8, SECONDS)
+        drivetrain.stop()
+        wait(0.5, SECONDS)
+        drivetrain.drive(FORWARD, 80, PERCENT)
+        wait(1, SECONDS)
+        drivetrain.stop()
+        wait(0.5, SECONDS)
+        drivetrain.drive(REVERSE, 90, PERCENT)
+        wait(1, SECONDS)
+        drivetrain.stop()
+        wait(0.5, SECONDS)
+        drivetrain.turn(RIGHT, 80, PERCENT)
+        wait(0.8, SECONDS)
+        intake.stop()
+        drivetrain.drive(FORWARD, 50, PERCENT)
+        wait(1, SECONDS)
+        drivetrain.stop()
+        drivetrain.turn(RIGHT, 30, PERCENT)
+        wait(0.5, SECONDS)
+        drivetrain.drive(FORWARD, 50, PERCENT)
+        wait(0.5, SECONDS)
+        drivetrain.stop()
+        clamp_status = 0
+        clamp.set(clamp_status)
 
     if team_position == "red_2" or team_position == "blue_2":
         pass
     if team_position == "skill":
-        #clamp first goal
-        drivetrain.drive(REVERSE, 80, PERCENT)
-        wait(0.5, SECONDS)
-        clamp.set(True)
-        drivetrain.stop()
-        wait(0.5, SECONDS)
-        #turn 180
-        intake.spin(FORWARD, 100, PERCENT)
-        drivetrain.turn(LEFT, 45, PERCENT)
-        wait(1, SECONDS)
-        drivetrain.stop() 
-        wait(0.5, SECONDS)
-        #get ring behind goal
-        drivetrain.drive(FORWARD, 80, PERCENT)
-        wait(0.5, SECONDS)
-        drivetrain.stop()
-        wait(0.5, SECONDS)
-        #turn right 90
-        drivetrain.turn(RIGHT, 45, PERCENT)
-        wait(1, SECONDS)
-        drivetrain.stop()
-        wait(0.5, SECONDS)
-        #get second ring
-        drivetrain.drive(FORWARD, 80, PERCENT)
-        wait(0.5, SECONDS)
-        drivetrain.stop()
-        wait(0.5, SECONDS)
-        #turn right 90
-        drivetrain.turn(RIGHT, 45, PERCENT)
-        wait(1, SECONDS)
-        drivetrain.stop()
-        wait(0.5, SECONDS)
-        #get two rings in the cornor
-        drivetrain.drive(FORWARD, 80, PERCENT)
-        wait(0.5, SECONDS)
-        drivetrain.stop()
-        wait(0.5, SECONDS)
-        #turn right 90
-        drivetrain.turn(RIGHT, 45, PERCENT)
-        wait(1, SECONDS)
-        drivetrain.stop()
-        wait(0.5, SECONDS)
-        #reverse, release the goal
-        drivetrain.drive(REVERSE, 40, PERCENT)
-        wait(0.5, SECONDS)
-        drivetrain.stop()
-        clamp.set(False)
-
+        pass
 #  Driver Control def
 def driver_control():
     global left_drive_smart_stopped, right_drive_smart_stopped, pto_status, clamp_status, lift_status
     drivetrain.set_stopping(COAST)
     # Process every 20 milliseconds
+    if team_position == "red_2" or team_position == "blue_2":
+        clamp_status = 1
+        clamp.set(clamp_status)
     while True:
-    # Status Update
+    # Status Update        
         pto.set(pto_status)
     # Drive Train
         #arcade drive
