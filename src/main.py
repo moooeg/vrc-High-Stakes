@@ -193,7 +193,7 @@ def autonomous():
         drivetrain.stop()
         wait(0.5, SECONDS)
         drivetrain.drive(FORWARD, 80, PERCENT)
-        wait(1, SECONDS)
+        wait(0.8, SECONDS)
         drivetrain.stop()
         wait(0.5, SECONDS)
         drivetrain.drive(REVERSE, 90, PERCENT)
@@ -231,7 +231,7 @@ def autonomous():
         drivetrain.stop()
         wait(0.5, SECONDS)
         drivetrain.drive(FORWARD, 80, PERCENT)
-        wait(1, SECONDS)
+        wait(0.8, SECONDS)
         drivetrain.stop()
         wait(0.5, SECONDS)
         drivetrain.drive(REVERSE, 90, PERCENT)
@@ -255,15 +255,11 @@ def autonomous():
     if team_position == "red_2" or team_position == "blue_2":
         pass
     if team_position == "skill":
-        pass
 #  Driver Control def
 def driver_control():
     global left_drive_smart_stopped, right_drive_smart_stopped, pto_status, clamp_status, lift_status
     drivetrain.set_stopping(COAST)
     # Process every 20 milliseconds
-    if team_position == "red_2" or team_position == "blue_2":
-        clamp_status = 1
-        clamp.set(clamp_status)
     while True:
     # Status Update        
         pto.set(pto_status)
@@ -363,10 +359,10 @@ def driver_control():
             pto.set(pto_status)
             lift.stop()
             if pto_status == 1:
-                controller_1.rumble("-")
+                controller_1.rumble("--")
                 lift.set_stopping(HOLD)
             else:
-                controller_1.rumble(".")
+                controller_1.rumble("..")
                 lift.set_stopping(COAST)
             while controller_1.buttonY.pressing():
                 wait(30, MSEC)
