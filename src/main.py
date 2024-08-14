@@ -344,13 +344,10 @@ def driver_control():
             
             
         #testing code
-        
+        lift_speed = controller_1.axis1.position()
         if pto_status == 1:
-            if controller_1.buttonB.pressing():
-                lift.spin(REVERSE, 100, PERCENT)
-            
-            elif controller_1.buttonA.pressing():
-                lift.spin(FORWARD, 100, PERCENT)
+            if not(-5 <= lift_speed <= 5):
+                lift.spin(Forward, lift_speed, PERCENT)
             else:
                 lift.stop()
         
