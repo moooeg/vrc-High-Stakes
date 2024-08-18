@@ -261,16 +261,21 @@ def driver_control():
     drivetrain.set_stopping(COAST)
     # Process every 20 milliseconds
     while True:
-    # Status Update        
+    # Status Update
         pto.set(pto_status)
     # Drive Train
         #arcade drive
         max_speed = 65
-        rotate = max_speed*controller_1.axis1.position()/100
         forward = 100*math.sin(((controller_1.axis3.position()**3)/636620))
+        rotate_dynamic = max_speed*math.sin(math.pi/2*math.sin(math.pi/2*abs(forward)/100))controller_1.axis1.position()/100
+        rotate_linear = max_speed*controller_1.axis1.position()/100
 
-        left_drive_smart_speed = forward + rotate
-        right_drive_smart_speed = forward - rotate
+        if -10 <= forward <= 10:
+        left_drive_smart_speed = forward + rotate_linear
+        right_drive_smart_speed = forward - rotate_linear
+        else:
+        left_drive_smart_speed = forward + rotate_dynamic
+        right_drive_smart_speed = forward - rotate_dynamic
 
         if left_drive_smart_speed < 3 and left_drive_smart_speed > -3:
             if left_drive_smart_stopped:
