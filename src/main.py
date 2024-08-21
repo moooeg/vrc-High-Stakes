@@ -255,6 +255,7 @@ def autonomous():
     if team_position == "red_2" or team_position == "blue_2":
         pass
     if team_position == "skill":
+        pass
 #  Driver Control def
 def driver_control():
     global left_drive_smart_stopped, right_drive_smart_stopped, pto_status, clamp_status, lift_status
@@ -267,15 +268,15 @@ def driver_control():
         #arcade drive
         max_speed = 65
         forward = 100*math.sin(((controller_1.axis3.position()**3)/636620))
-        rotate_dynamic = max_speed*math.sin(math.pi/2*math.sin(math.pi/2*abs(forward)/100))controller_1.axis1.position()/100
-        rotate_linear = max_speed*controller_1.axis1.position()/100
+        rotate_dynamic = max_speed*math.sin(math.pi/2*math.sin(math.pi/2*abs(forward)/100))*controller_1.axis1.position()/100
+        rotate_linear = 50*controller_1.axis1.position()/100
 
         if -10 <= forward <= 10:
-        left_drive_smart_speed = forward + rotate_linear
-        right_drive_smart_speed = forward - rotate_linear
+            left_drive_smart_speed = forward + rotate_linear
+            right_drive_smart_speed = forward - rotate_linear
         else:
-        left_drive_smart_speed = forward + rotate_dynamic
-        right_drive_smart_speed = forward - rotate_dynamic
+            left_drive_smart_speed = forward + rotate_dynamic
+            right_drive_smart_speed = forward - rotate_dynamic
 
         if left_drive_smart_speed < 3 and left_drive_smart_speed > -3:
             if left_drive_smart_stopped:
@@ -349,10 +350,10 @@ def driver_control():
             
             
         #testing code
-        lift_speed = controller_1.axis1.position()
+        lift_speed = -0.7*controller_1.axis2.position()
         if pto_status == 1:
             if not(-5 <= lift_speed <= 5):
-                lift.spin(Forward, lift_speed, PERCENT)
+                lift.spin(FORWARD, lift_speed, PERCENT)
             else:
                 lift.stop()
         
