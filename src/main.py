@@ -266,12 +266,12 @@ def driver_control():
         pto.set(pto_status)
     # Drive Train
         #arcade drive
-        max_speed = 65
+        ratio = 1.5
         forward = 100*math.sin(((controller_1.axis3.position()**3)/636620))
-        rotate_dynamic = max_speed*math.sin(math.pi/2*math.sin(math.pi/2*abs(forward)/100))*controller_1.axis1.position()/100
-        rotate_linear = 50*controller_1.axis1.position()/100
+        rotate_dynamic = (100/ratio)*math.sin((abs((forward**3))/636620))*math.sin(((controller_1.axis1.position()**3)/636620))
+        rotate_linear = 50*math.sin(((controller_1.axis1.position()**3)/636620))
 
-        if -10 <= forward <= 10:
+        if -35 <= forward <= 35:
             left_drive_smart_speed = forward + rotate_linear
             right_drive_smart_speed = forward - rotate_linear
         else:
