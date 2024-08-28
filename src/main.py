@@ -42,16 +42,18 @@ lift = MotorGroup(left_lift, right_lift)
 intake = Motor(Ports.PORT9, GearSetting.RATIO_6_1, False)
 
 # Drivetrain
-drivetrain = DriveTrain(left_drive_smart, right_drive_smart, 299.24, 377.1, 304.8, MM, 5/3)
+drivetrain = DriveTrain(left_drive_smart, right_drive_smart, 299.24 , 377.1, 304.8, MM, 5/3)
 
 # Sensor & Pneumatics
 inertial = Inertial(Ports.PORT20)
-lift_rotation = Rotation(Ports.PORT18, False)
+lift_rotation = Rotation(Ports.PORT19, False)
 
-lift_rotation.set_position(0, DEGREES)
+lift_rotation.set_position(5, DEGREES)
 
 pto = DigitalOut(brain.three_wire_port.a)
 clamp = DigitalOut(brain.three_wire_port.b)
+flag = DigitalOut(brain.three_wire_port.c)
+sorter = DigitalOut(brain.three_wire_port.d)
 
 # Variables initialisation
 left_drive_smart_stopped = 0
@@ -256,10 +258,12 @@ def autonomous():
         pass
     if team_position == "skill":
         pass
+
 #  Driver Control def
 def driver_control():
     global left_drive_smart_stopped, right_drive_smart_stopped, pto_status, clamp_status, lift_status
     drivetrain.set_stopping(COAST)
+    lift_status = 0
     # Process every 20 milliseconds
     while True:
     # Status Update
@@ -315,26 +319,27 @@ def driver_control():
         else:
             intake.stop()
         '''    
-        if controller_1.buttonL1.pressing():
-            if lift_status == 0:
-                if pto_status == 0:
-                    pto_status = 1
-                    pto.set(pto_status)
-                    wait(500, MSEC)
-                    lift_status = "up"
-                    lift.stop()
-                    lift.set_stopping(HOLD)
-                    lift.spin(FORWARD, 100, PERCENT)
-                elif pto_status == 1:
-                    lift_status = "down"
-                    lift.spin(REVERSE, 100, PERCENT)
-            while controller_1.buttonL1.pressing():
+        if controller_1.axis2.position() > 50 and lift_status == 0 and pto_status == 0:
+            pto_status = 1
+            pto.set(pto_status)
+            wait(500, MSEC)
+            lift_status = "up"
+            lift.stop()
+            lift.set_stopping(HOLD)
+            lift.spin(FORWARD, 100, PERCENT)
+            while controller_1.axis2.position() > 50:
+                wait(30, MSEC)
+            
+        if controller_1.axis2.position() < 50 and lift_status == 0 and pto_status == 1:
+            lift_status = "down"
+            lift.spin(REVERSE, 100, PERCENT)
+            while controller_1.axis2.position() < -50:
                 wait(30, MSEC)
 
-        if lift_status == "up" and lift_rotation.position(TURNS) < -1.3-0.3:
+        if lift_status == "up" and lift_rotation.position(TURNS) > -290:
             lift.stop()
             lift_status = 0
-        if lift_status == "down" and lift_rotation.position(TURNS) > 0:
+        if lift_status == "down" and lift_rotation.position(TURNS) > 10:
             lift.stop()
             lift_status = 0
             pto_status = 0
