@@ -6,16 +6,18 @@ from vex import *
 # High Stakes 2024-2025
 # ------------------------
 # Wiring Guide
-# left drivebase motors: 1, 2
-# right drivebase motors: 3, 4
-# lift: left 5, right 6
-# intake: 7
+# left drivebase motors: 1, 2, 3
+# right drivebase motors: 4, 5, 6
+# lift: left 7, right 8
+# intake: 9
 #
 # inertial: 20
-# lift rotation: 18
+# lift rotation: 19
 #
 # PTO: A
-# goal clamp: B
+# Goal clamp: B
+# Flag: C
+# Sorter: D
 
 
 # Brain
@@ -47,6 +49,7 @@ drivetrain = DriveTrain(left_drive_smart, right_drive_smart, 299.24 , 377.1, 304
 # Sensor & Pneumatics
 inertial = Inertial(Ports.PORT20)
 lift_rotation = Rotation(Ports.PORT19, False)
+odometry = Rotation(Ports.PORT18, False)
 
 lift_rotation.set_position(5, DEGREES)
 
@@ -63,6 +66,8 @@ right_drive_smart_speed = 0
 pto_status = 0 #0 drivebase, 1 lift
 clamp_status = 0 #0 release, 1 clamp
 lift_status = 0
+ring_sort_status = "Both"
+flag_status = 0 #0 up, 1 down
 
 brain.screen.draw_image_from_file("begin.png", 0, 0)
 # team and side choosing
@@ -161,7 +166,6 @@ def drivetrain_turn(target_angle):
     integral = 0
     inertial.set_heading(0.5, DEGREES)
     drivetrain.turn(RIGHT)
-    drivetrain.set_stopping(HOLD)
     current_angle = inertial.heading(DEGREES)
     while not (target_angle - 0.5 < current_angle < target_angle + 0.5):
         error = target_angle - current_angle
@@ -175,6 +179,27 @@ def drivetrain_turn(target_angle):
         current_angle = inertial.heading(DEGREES)
     drivetrain.stop()
 
+# odometry def
+def drivetrain_forward(target_turns):
+    kp = 0.18
+    ki = 0.139
+    kd = 0.05
+    previous_error = 0
+    integral = 0
+    drivetrain.drive(FORWARD)
+    initial_turns = odometry.position(TURNS)
+    current_turns = odometry.position(TURNS)
+    while not(target_turns-0.2 < current_turns - initial_turns < target_turns+0.2):
+        error = target_turns-(current_turns-initial_turns)
+        integral += error
+        integral = max(min(integral, 30), -30)
+        derivative = error - previous_error
+        odometry_output = (kp * error) + (ki * integral) + (kd * derivative)
+        previous_error = error
+        odometry_output = max(min(odometry_output, 100), -100)
+        drivetrain.set_drive_velocity(odometry_output, PERCENT)
+        current_turns = odometry.position(TURNS)
+    drivetrain.stop()
 
 # Autonomous def
 def autonomous():
@@ -264,6 +289,7 @@ def driver_control():
     global left_drive_smart_stopped, right_drive_smart_stopped, pto_status, clamp_status, lift_status
     drivetrain.set_stopping(COAST)
     lift_status = 0
+    brain.timer.clear()
     # Process every 20 milliseconds
     while True:
     # Status Update
@@ -318,7 +344,8 @@ def driver_control():
             intake.spin(REVERSE, 100, PERCENT)
         else:
             intake.stop()
-        '''    
+            
+        #lift contol
         if controller_1.axis2.position() > 50 and lift_status == 0 and pto_status == 0:
             pto_status = 1
             pto.set(pto_status)
@@ -346,15 +373,49 @@ def driver_control():
             lift.set_stopping(COAST)
             wait(200, MSEC)
             pto.set(pto_status)
-        '''
+            
+        #flag control
+        if controller_1.buttonL1.pressing():
+            flag_status = not flag_status
+            flag.set(flag_status)
+            while controller_1.buttonL1.pressing():
+                wait(30, MSEC)
+            
+        # goal clamp control
         if controller_1.buttonL2.pressing():
             clamp_status = not clamp_status
             clamp.set(clamp_status)
             while controller_1.buttonL2.pressing():
                 wait(30, MSEC)
             
+        # ring sorting status control
+        if controller_2.buttonA.pressing():
+            if ring_sort_status == "Red":
+                ring_sort_status = "Blue"
+            else:
+                ring_sort_status = "Red"
+            while controller_1.buttonA.pressing():
+                wait(30, MSEC)
+        elif controller_2.buttonB.pressing():
+            ring_sort_status = "Both"
+            while controller_1.buttonB.pressing():
+                wait(30, MSEC)
+        
+        #co-driver controller print
+        controller_2.screen.clear_screen()
+        controller_2.screen.set_cursor(1,1)
+        controller_2.screen.print("Time left: ", 105-brain.timer.time(SECONDS))
+        controller_2.screen.new_line()
+        if clamp_status == 0:
+            controller_2.screen.print("Goal clamp status: Released")
+        else:
+            controller_2.screen.print("Goal clamp status: Clamped")
+        controller_2.screen.new_line()
+        controller_2.screen.print("Color sorting: ", ring_sort_status)
+        
             
         #testing code
+        '''
         lift_speed = -0.7*controller_1.axis2.position()
         if pto_status == 1:
             if not(-5 <= lift_speed <= 5):
@@ -374,7 +435,7 @@ def driver_control():
                 lift.set_stopping(COAST)
             while controller_1.buttonY.pressing():
                 wait(30, MSEC)
-        
+            '''
 
 #choose team
 team_position = team_choosing() 
