@@ -189,7 +189,7 @@ def drivetrain_forward(target_turns):
     drivetrain.drive(FORWARD)
     initial_turns = odometry.position(TURNS)
     current_turns = odometry.position(TURNS)
-    while not(target_turns-0.2 < current_turns - initial_turns < target_turns+0.2):
+    while not(target_turns-0.1 < current_turns - initial_turns < target_turns+0.1):
         error = target_turns-(current_turns-initial_turns)
         integral += error
         integral = max(min(integral, 30), -30)
@@ -344,36 +344,7 @@ def driver_control():
             intake.spin(REVERSE, 100, PERCENT)
         else:
             intake.stop()
-            
-        #lift contol
-        if controller_1.axis2.position() > 50 and lift_status == 0 and pto_status == 0:
-            pto_status = 1
-            pto.set(pto_status)
-            wait(500, MSEC)
-            lift_status = "up"
-            lift.stop()
-            lift.set_stopping(HOLD)
-            lift.spin(FORWARD, 100, PERCENT)
-            while controller_1.axis2.position() > 50:
-                wait(30, MSEC)
-            
-        if controller_1.axis2.position() < 50 and lift_status == 0 and pto_status == 1:
-            lift_status = "down"
-            lift.spin(REVERSE, 100, PERCENT)
-            while controller_1.axis2.position() < -50:
-                wait(30, MSEC)
-
-        if lift_status == "up" and lift_rotation.position(TURNS) > -290:
-            lift.stop()
-            lift_status = 0
-        if lift_status == "down" and lift_rotation.position(TURNS) > 10:
-            lift.stop()
-            lift_status = 0
-            pto_status = 0
-            lift.set_stopping(COAST)
-            wait(200, MSEC)
-            pto.set(pto_status)
-            
+       
         #flag control
         if controller_1.buttonL1.pressing():
             flag_status = not flag_status
@@ -415,7 +386,7 @@ def driver_control():
         
             
         #testing code
-        '''
+        
         lift_speed = -0.7*controller_1.axis2.position()
         if pto_status == 1:
             if not(-5 <= lift_speed <= 5):
@@ -435,7 +406,36 @@ def driver_control():
                 lift.set_stopping(COAST)
             while controller_1.buttonY.pressing():
                 wait(30, MSEC)
-            '''
+        '''        
+        #lift contol
+        if controller_1.axis2.position() > 50 and lift_status == 0 and pto_status == 0:
+            pto_status = 1
+            pto.set(pto_status)
+            wait(500, MSEC)
+            lift_status = "up"
+            lift.stop()
+            lift.set_stopping(HOLD)
+            lift.spin(FORWARD, 100, PERCENT)
+            while controller_1.axis2.position() > 50:
+                wait(30, MSEC)
+         
+        if controller_1.axis2.position() < 50 and lift_status == 0 and pto_status == 1:
+            lift_status = "down"
+            lift.spin(REVERSE, 100, PERCENT)
+            while controller_1.axis2.position() < -50:
+                wait(30, MSEC)
+
+        if lift_status == "up" and lift_rotation.position(TURNS) > -290:
+            lift.stop()
+            lift_status = 0
+        if lift_status == "down" and lift_rotation.position(TURNS) > 10:
+            lift.stop()
+            lift_status = 0
+            pto_status = 0
+            lift.set_stopping(COAST)
+            wait(200, MSEC)
+            pto.set(pto_status)
+        '''
 
 #choose team
 team_position = team_choosing() 
