@@ -347,10 +347,9 @@ def driver_control():
        
         #flag control
         if controller_1.buttonL1.pressing():
-            flag_status = not flag_status
-            flag.set(flag_status)
-            while controller_1.buttonL1.pressing():
-                wait(30, MSEC)
+            flag.set(True)
+        else:
+            flag.set(False)
             
         # goal clamp control
         if controller_1.buttonL2.pressing():
@@ -386,10 +385,9 @@ def driver_control():
         
             
         #testing code
-        
         lift_speed = -0.7*controller_1.axis2.position()
         if pto_status == 1:
-            if not(-5 <= lift_speed <= 5):
+            if not(-20 <= lift_speed <= 20):
                 lift.spin(FORWARD, lift_speed, PERCENT)
             else:
                 lift.stop()
