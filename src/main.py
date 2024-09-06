@@ -67,7 +67,6 @@ pto_status = 0 #0 drivebase, 1 lift
 clamp_status = 0 #0 release, 1 clamp
 lift_status = 0
 ring_sort_status = "Both"
-flag_status = 0 #0 up, 1 down
 
 brain.screen.draw_image_from_file("begin.png", 0, 0)
 # team and side choosing
