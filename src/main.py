@@ -16,7 +16,7 @@ from vex import *
 #
 # PTO: A
 # Goal clamp: B
-# Flag: C
+# Paddle: C
 # Sorter: D
 
 
@@ -55,8 +55,9 @@ lift_rotation.set_position(5, DEGREES)
 
 pto = DigitalOut(brain.three_wire_port.a)
 clamp = DigitalOut(brain.three_wire_port.b)
-flag = DigitalOut(brain.three_wire_port.c)
+paddle = DigitalOut(brain.three_wire_port.c)
 sorter = DigitalOut(brain.three_wire_port.d)
+indicator = DigitalOut(brain.three_wire_port.e)
 
 # Variables initialisation
 left_drive_smart_stopped = 0
@@ -344,16 +345,17 @@ def driver_control():
         else:
             intake.stop()
        
-        #flag control
+        # control
         if controller_1.buttonL1.pressing():
-            flag.set(True)
+            paddle.set(True)
         else:
-            flag.set(False)
+            paddle.set(False)
             
         # goal clamp control
         if controller_1.buttonL2.pressing():
             clamp_status = not clamp_status
             clamp.set(clamp_status)
+            indicator.set(not clamp_status)
             while controller_1.buttonL2.pressing():
                 wait(30, MSEC)
             
@@ -369,20 +371,7 @@ def driver_control():
             ring_sort_status = "Both"
             while controller_1.buttonB.pressing():
                 wait(30, MSEC)
-        
-        #co-driver controller print
-        controller_2.screen.clear_screen()
-        controller_2.screen.set_cursor(1,1)
-        controller_2.screen.print("Time left: ", 105-brain.timer.time(SECONDS))
-        controller_2.screen.new_line()
-        if clamp_status == 0:
-            controller_2.screen.print("Goal clamp status: Released")
-        else:
-            controller_2.screen.print("Goal clamp status: Clamped")
-        controller_2.screen.new_line()
-        controller_2.screen.print("Color sorting: ", ring_sort_status)
-        
-            
+         
         #testing code
         lift_speed = -0.7*controller_1.axis2.position()
         if pto_status == 1:
