@@ -49,10 +49,12 @@ drivetrain = DriveTrain(left_drive_smart, right_drive_smart, 299.24 , 377.1, 304
 
 # Sensor & Pneumatics
 inertial = Inertial(Ports.PORT20)
-lift_rotation = Rotation(Ports.PORT19, False)
+lift_rotation = Rotation(Ports.PORT12, False)
 odometry = Rotation(Ports.PORT18, False)
+optical = Optical(Ports.PORT17)
 
-lift_rotation.set_position(5, DEGREES)
+lift_rotation.set_position(360, DEGREES)
+
 
 pto = DigitalOut(brain.three_wire_port.f)
 clamp = DigitalOut(brain.three_wire_port.b)
@@ -71,7 +73,7 @@ lift_status = 0
 ring_sort_status = "Both"
 
 brain.screen.draw_image_from_file("begin.png", 0, 0)
-
+'''
 # auto path planner
 class Coordinate:
     def __init__(self, x: float, y: float):
@@ -110,14 +112,12 @@ class Coordinate:
     def __str__(self):
         return f'[{self.x}, {self.y}]'
 
-
 # return -1 if negative, or 1 otherwise
 def sgn(num: float) -> int:
     if num >= 0:
         return 1
     else:
         return -1
-
 
 # helper function for line_circle_intersection
 def LCI_check(point: Coordinate, line_start: Coordinate, line_end: Coordinate) -> Coordinate:
@@ -132,7 +132,6 @@ def LCI_check(point: Coordinate, line_start: Coordinate, line_end: Coordinate) -
         return Coordinate(-200000, -200000)
 
     return point
-
 
 # Return the coordinate of two intersection between the circle and line
 def line_circle_intersection(currentPos: Coordinate, pt1: Coordinate, pt2: Coordinate, lookAheadDis: float) -> list[Coordinate]:
@@ -167,7 +166,6 @@ def line_circle_intersection(currentPos: Coordinate, pt1: Coordinate, pt2: Coord
     point_2_y = (-1 * D * dx - abs(dy) * discriminant ** 0.5) / dr ** 2 + currentY
 
     return [LCI_check(Coordinate(point_1_x, point_1_y), pt1, pt2), LCI_check(Coordinate(point_2_x, point_2_y), pt1, pt2)]
-
 
 def get_move_plan(path: list[Coordinate], radius: float) -> list:
     lastPoint = 0
@@ -224,6 +222,7 @@ def get_move_plan(path: list[Coordinate], radius: float) -> list:
         currentAngle = (currentAngle + relevant_turn_angle) % 360
 
     return result
+'''
 
 # team and side choosing
 def team_choosing():
@@ -362,11 +361,11 @@ def drivetrain_forward(target_turns):
 #autopath def
 '''
 def autopath(coor_list, radius): #coordinate and radius needs to be mm, in form of [rp.Coordinate(x, y)]
-    plan = rp.get_move_plan(coor_list, radius)
+    plan = get_move_plan(coor_list, radius)
     for i in range(len(plan[0])):
         drivetrain_turn(plan[0][i])
         drivetrain_forward(plan[1][i]/159.64) #convert mm into turns'''
-        
+         
 # Autonomous def
 def autonomous():
     if team_position == "red_1" or team_position == "blue_2":
@@ -490,6 +489,7 @@ def driver_control():
             intake.spin(FORWARD, 100, PERCENT)
         elif controller_1.buttonR2.pressing():
             intake.spin(REVERSE, 100, PERCENT)
+                
         else:
             intake.stop()
        
@@ -519,60 +519,33 @@ def driver_control():
             ring_sort_status = "Both"
             while controller_1.buttonB.pressing():
                 wait(30, MSEC)
-         
-        #testing code
-        lift_speed = -0.7*controller_1.axis2.position()
-        if pto_status == 1:
-            if not(-20 <= lift_speed <= 20):
-                lift.spin(FORWARD, lift_speed, PERCENT)
-            else:
-                lift.stop()
-        
-        if controller_1.buttonY.pressing():
-            pto_status = not pto_status
-            pto.set(pto_status)
-            lift.stop()
-            if pto_status == 1:
-                controller_1.rumble("--")
-                lift.set_stopping(HOLD)
-            else:
-                controller_1.rumble("..")
-                lift.set_stopping(COAST)
-            while controller_1.buttonY.pressing():
-                wait(30, MSEC)
-        
-        if controller_1.buttonA.pressing():
-            drivetrain_turn(90)
-        '''        
+            
         #lift contol
-        if controller_1.axis2.position() > 50 and lift_status == 0 and pto_status == 0:
+        if controller_1.axis2.position() > 90:
+            lift_status = "up"
             pto_status = 1
             pto.set(pto_status)
-            wait(500, MSEC)
-            lift_status = "up"
-            lift.stop()
-            lift.set_stopping(HOLD)
-            lift.spin(FORWARD, 100, PERCENT)
-            while controller_1.axis2.position() > 50:
-                wait(30, MSEC)
-         
-        if controller_1.axis2.position() < 50 and lift_status == 0 and pto_status == 1:
-            lift_status = "down"
+            lift_rotation.set_position(360, DEGREES)
+            wait(300, MSEC)
             lift.spin(REVERSE, 100, PERCENT)
-            while controller_1.axis2.position() < -50:
-                wait(30, MSEC)
-
-        if lift_status == "up" and lift_rotation.position(TURNS) > -290:
-            lift.stop()
+            
+        if controller_1.axis2.position() < -90:
+            lift_status = "down"
+            lift.spin(FORWARD, 80, PERCENT)
+            
+            
+        if lift_rotation.position(DEGREES) < 65 and lift_status == "up":
+            lift.set_stopping(HOLD)
             lift_status = 0
-        if lift_status == "down" and lift_rotation.position(TURNS) > 10:
             lift.stop()
+        
+        if lift_rotation.position(DEGREES) > 355 and lift_status == "down":
+            lift.stop()
+            lift.set_stopping(COAST)
             lift_status = 0
             pto_status = 0
-            lift.set_stopping(COAST)
-            wait(200, MSEC)
             pto.set(pto_status)
-        '''
+
 
 #choose team
 team_position = team_choosing() 
