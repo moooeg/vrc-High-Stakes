@@ -161,7 +161,7 @@ def team_choosing():
         wait(5, MSEC)
 
 # PID turn def
-def drivetrain_turn(target_angle):
+def drivetrain_turn_right(target_angle: float):
     #change kp, ki, kd, accoding to the robot
     kp = 0.4
     ki = 0.25
@@ -182,9 +182,33 @@ def drivetrain_turn(target_angle):
         drivetrain.set_turn_velocity(pid_output, PERCENT)
         current_angle = inertial.heading(DEGREES)
     drivetrain.stop()
+    
+def drivetrain_turn_left(target_angle: float):
+    #change kp, ki, kd, accoding to the robot
+    kp = 0.4
+    ki = 0.25
+    kd = 0.2
+    previous_error = 0
+    integral = 0
+    inertial.set_heading(359.5, DEGREES)
+    drivetrain.turn(LEFT)
+    current_angle = inertial.heading(DEGREES)
+    while not (target_angle - 0.5 < current_angle < target_angle + 0.5):
+        error = current_angle-target_angle
+        integral += error
+        integral = max(min(integral, 30), -30)
+        derivative = error - previous_error
+        pid_output = (kp * error) + (ki * integral) + (kd * derivative)
+        previous_error = error
+        pid_output = max(min(pid_output, 100), -100)
+        drivetrain.set_turn_velocity(pid_output, PERCENT)
+        current_angle = inertial.heading(DEGREES)
+    drivetrain.stop()
 
 # odometry def
-def drivetrain_forward(target_turns):
+def drivetrain_forward(target_turns: float, unit: str = "turns" ):
+    if unit == "mm":
+        target_turns = target_turns/159.59
     kp = 1
     ki = 2.5
     kd = 2
@@ -208,77 +232,64 @@ def drivetrain_forward(target_turns):
     wait(100, MSEC)
     drivetrain.set_stopping(COAST)
 
-
+'''
 def autopath(plan_list): #coordinate and radius needs to be mm, in form of [rp.Coordinate(x, y)]
     for i in range(len(plan_list[0])):
         drivetrain_turn(plan_list[0][i])
-        drivetrain_forward(plan_list[1][i]/159.64) #convert mm into turns'''
+        drivetrain_forward(plan_list[1][i]/159.59) #convert mm into turns'''
          
 # Autonomous def
 def autonomous():
-    if team_position == "red_1" or team_position == "blue_2":
-        drivetrain.set_drive_velocity(80, PERCENT)
+    if team_position == "red_1":
         intake.set_velocity(100, PERCENT)
-        drivetrain.drive(REVERSE)
-        wait(0.83, SECONDS)
-        drivetrain.stop()
-        wait(0.3, SECONDS)
+        drivetrain_forward(-900, "MM")
+        drivetrain_turn_left(20)
+        drivetrain_forward(-531, "MM")
         clamp_status = 1
         clamp.set(clamp_status)
-        intake.set_timeout(1, SECONDS)
-        intake.spin_for(FORWARD, 100, TURNS)
-        drivetrain.turn(LEFT, 45, PERCENT)
-        wait(1, SECONDS)
-        intake.spin(REVERSE)
-        drivetrain.drive(FORWARD, 50, PERCENT)
+        drivetrain_turn_right(20)
         intake.spin(FORWARD)
-        wait(1, SECONDS)
-        drivetrain.stop()
-        drivetrain.turn(RIGHT, 75, PERCENT)
-        wait(1, SECONDS)
-        drivetrain.stop()
-        drivetrain.drive(FORWARD)
-        wait(1, SECONDS)
+        drivetrain_forward(440)
+        wait(500, MSEC)
         intake.stop()
-        drivetrain.stop()
-
-    if team_position == "blue_1" or team_position == "red_2":
-        drivetrain.set_drive_velocity(80, PERCENT)
-        intake.set_velocity(100, PERCENT)
-        drivetrain.drive(REVERSE)
-        wait(0.83, SECONDS)
-        drivetrain.stop()
-        wait(0.3, SECONDS)
+        clamp_status = 0
+        clamp.set(clamp_status)
+        drivetrain_turn_left(100)
+        drivetrain_forward(-600, "MM")
         clamp_status = 1
         clamp.set(clamp_status)
-        intake.set_timeout(1, SECONDS)
-        intake.spin_for(FORWARD, 100, TURNS)
-        drivetrain.turn(RIGHT, 45, PERCENT)
-        wait(1, SECONDS)
-        intake.spin(REVERSE)
-        drivetrain.drive(FORWARD, 50, PERCENT)
         intake.spin(FORWARD)
-        wait(1, SECONDS)
-        drivetrain.stop()
-        drivetrain.turn(LEFT, 75, PERCENT)
-        wait(1, SECONDS)
-        drivetrain.stop()
-        drivetrain.drive(FORWARD)
-        wait(1, SECONDS)
+        drivetrain_turn_left(130)
+        drivetrain_forward(400, "MM")
+        
+    if team_position == "red_2":
+        pass
+    if team_position == "blue_1":
+        intake.set_velocity(100, PERCENT)
+        drivetrain_forward(-900, "MM")
+        drivetrain_turn_right(20)
+        drivetrain_forward(-531, "MM")
+        clamp_status = 1
+        clamp.set(clamp_status)
+        drivetrain_turn_left(20)
+        intake.spin(FORWARD)
+        drivetrain_forward(440)
+        wait(500, MSEC)
         intake.stop()
-        drivetrain.stop()
-
-    if team_position == "red_2" or team_position == "blue_2":
+        clamp_status = 0
+        clamp.set(clamp_status)
+        drivetrain_turn_right(100)
+        drivetrain_forward(-600, "MM")
+        clamp_status = 1
+        clamp.set(clamp_status)
+        intake.spin(FORWARD)
+        drivetrain_turn_right(130)
+        drivetrain_forward(400, "MM")
+        
+    if team_position == "blue_2":
         pass
     if team_position == "skill":
-        drivetrain.drive_for(REVERSE, 200, MM)
-        clamp.set(True)
-        wait(0.5, SECONDS)
-        intake.spin(FORWARD, 100, PERCENT)
-        drivetrain.turn_for(RIGHT, 60, DEGREES, True)
-        drivetrain.drive_for(REVERSE, 5000, MM)
-        drivetrain.stop()
-
+        pass
 #  Driver Control def
 def driver_control():
     global left_drive_smart_stopped, right_drive_smart_stopped, pto_status, clamp_status, lift_status
