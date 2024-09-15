@@ -240,8 +240,8 @@ def autopath(plan_list): #coordinate and radius needs to be mm, in form of [rp.C
          
 # Autonomous def
 def autonomous():
+    intake.set_velocity(100, PERCENT)
     if team_position == "red_1":
-        intake.set_velocity(100, PERCENT)
         drivetrain_forward(-900, "MM")
         drivetrain_turn_left(20)
         drivetrain_forward(-531, "MM")
@@ -263,9 +263,39 @@ def autonomous():
         drivetrain_forward(400, "MM")
         
     if team_position == "red_2":
-        pass
+        pto_status = 1
+        pto.set(pto_status)
+        lift.spin(REVERSE, 100, PERCENT)
+        if lift_rotation.position() > 65:
+            lift.set_stopping(HOLD)
+            lift.stop()
+        drivetrain_forward(340, "MM")
+        lift.spin(FORWARD, 100, PERCENT)
+        wait(1, SECONDS)
+        lift.set_stopping(COAST)
+        lift.stop()
+        drivetrain_forward(-1095, "MM")
+        lift.spin(FORWARD, 100, PERCENT)
+        if lift_rotation.position() < 355:
+            lift.stop()
+        clamp_status = 1
+        clamp.set(clamp_status)
+        drivetrain_turn_right(120)
+        intake.spin(FORWARD)
+        drivetrain_forward(580, "MM")
+        drivetrain_turn_right(80)
+        drivetrain_forward(500, "MM")
+        wait(500, MSEC)
+        drivetrain_forward(-500, "MM")
+        drivetrain_turn_right(15)
+        drivetrain_forward(500, "MM")
+        wait(500, MSEC)
+        drivetrain_forward(-250, "MM")
+        drivetrain_turn_right(80)
+        drivetrain_forward(811, "MM")
+        
+        
     if team_position == "blue_1":
-        intake.set_velocity(100, PERCENT)
         drivetrain_forward(-900, "MM")
         drivetrain_turn_right(20)
         drivetrain_forward(-531, "MM")
@@ -287,7 +317,37 @@ def autonomous():
         drivetrain_forward(400, "MM")
         
     if team_position == "blue_2":
-        pass
+        pto_status = 1
+        pto.set(pto_status)
+        lift.spin(REVERSE, 100, PERCENT)
+        if lift_rotation.position() > 65:
+            lift.set_stopping(HOLD)
+            lift.stop()
+        drivetrain_forward(340, "MM")
+        lift.spin(FORWARD, 100, PERCENT)
+        wait(1, SECONDS)
+        lift.set_stopping(COAST)
+        lift.stop()
+        drivetrain_forward(-1095, "MM")
+        lift.spin(FORWARD, 100, PERCENT)
+        if lift_rotation.position() < 355:
+            lift.stop()
+        clamp_status = 1
+        clamp.set(clamp_status)
+        drivetrain_turn_left(120)
+        intake.spin(FORWARD)
+        drivetrain_forward(580, "MM")
+        drivetrain_turn_left(80)
+        drivetrain_forward(500, "MM")
+        wait(500, MSEC)
+        drivetrain_forward(-500, "MM")
+        drivetrain_turn_left(15)
+        drivetrain_forward(500, "MM")
+        wait(500, MSEC)
+        drivetrain_forward(-250, "MM")
+        drivetrain_turn_left(80)
+        drivetrain_forward(811, "MM")
+        
     if team_position == "skill":
         pass
 #  Driver Control def
@@ -346,6 +406,12 @@ def driver_control():
         
         if controller_1.buttonR1.pressing():
             intake.spin(FORWARD, 100, PERCENT)
+            if ring_sort_status == "RED":
+                if not optical.color() == "RED":
+                    intake.spin_for(REVERSE, 1, TURNS)
+            elif ring_sort_status == "BLUE":
+                if not optical.color() == "BLUE":
+                    intake.spin_for(REVERSE, 1, TURNS)
         elif controller_1.buttonR2.pressing():
             intake.spin(REVERSE, 100, PERCENT)
                 
