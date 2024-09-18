@@ -1,6 +1,5 @@
 # Library imports
 from vex import *
-from math import atan2, degrees
 # ------------------------
 # Code by Eric & Peter (mostly Eric)
 # Team 75477M 'Frij'
@@ -61,6 +60,7 @@ clamp = DigitalOut(brain.three_wire_port.b)
 paddle = DigitalOut(brain.three_wire_port.c)
 sorter = DigitalOut(brain.three_wire_port.d)
 indicator = DigitalOut(brain.three_wire_port.e)
+elevation = DigitalOut(brain.three_wire_port.g)
 
 # Variables initialisation
 left_drive_smart_stopped = 0
@@ -71,6 +71,7 @@ pto_status = 0 #0 drivebase, 1 lift
 clamp_status = 0 #0 release, 1 clamp
 lift_status = 0
 ring_sort_status = "Both"
+elevation_status = 0
 
 brain.screen.draw_image_from_file("begin.png", 0, 0)
 
@@ -436,15 +437,15 @@ def driver_control():
         if controller_2.buttonA.pressing():
             if ring_sort_status == "Red":
                 ring_sort_status = "Blue"
-            else:
+            elif ring_sort_status == "Blue":
+                ring_sort_status = "Both"
+            elif ring_sort_status == "Both":
                 ring_sort_status = "Red"
+            controller_2.screen.set_cursor(1,1)
+            controller_2.screen.print("Color sorting: ", ring_sort_status)
             while controller_1.buttonA.pressing():
                 wait(30, MSEC)
-        elif controller_2.buttonB.pressing():
-            ring_sort_status = "Both"
-            while controller_1.buttonB.pressing():
-                wait(30, MSEC)
-            
+                
         #lift contol
         if controller_1.axis2.position() > 90:
             lift_status = "up"
@@ -469,7 +470,15 @@ def driver_control():
             lift_status = 0
             pto_status = 0
             pto.set(pto_status)
-
+            
+        #elevation
+        if controller_1.buttonX.pressing():
+            elevation_status = not elevation_status
+            elevation.set(elevation_status)
+            while controller_1.buttonX.pressing():
+                wait(30, MSEC)
+        if brain.timer.time(SECONDS) > 104:
+            elevation.set(False)
 
 #choose team
 team_position = team_choosing() 
