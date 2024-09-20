@@ -69,9 +69,10 @@ left_drive_smart_speed = 0
 right_drive_smart_speed = 0
 pto_status = 0 #0 drivebase, 1 lift
 clamp_status = 0 #0 release, 1 clamp
-lift_status = 0
-ring_sort_status = "Both"
-elevation_status = 0
+lift_status = "stop" #direction of lift, up, down and stop
+lift_stage = 0 # 0 lowest, 2 heighest
+ring_sort_status = "Both" #Red, Blue and Both
+elevation_status = 0 #0 down, 1 up
 
 brain.screen.draw_image_from_file("begin.png", 0, 0)
 
@@ -353,7 +354,7 @@ def autonomous():
         pass
 #  Driver Control def
 def driver_control():
-    global left_drive_smart_stopped, right_drive_smart_stopped, pto_status, clamp_status, lift_status
+    global left_drive_smart_stopped, right_drive_smart_stopped, pto_status, clamp_status, lift_status, lift_stage, ring_sort_status
     drivetrain.set_stopping(COAST)
     lift_status = 0
     brain.timer.clear()
@@ -367,10 +368,15 @@ def driver_control():
         forward = 100*math.sin(((controller_1.axis3.position()**3)/636620))
         rotate_dynamic = (100/ratio)*math.sin((abs((forward**3))/636620))*math.sin(((controller_1.axis1.position()**3)/636620))
         rotate_linear = 50*math.sin(((controller_1.axis1.position()**3)/636620))
+        rotate_linear_lift = 35*math.sin(((controller_1.axis1.position()**3)/636620))
 
         if -35 <= forward <= 35:
-            left_drive_smart_speed = forward + rotate_linear
-            right_drive_smart_speed = forward - rotate_linear
+            if lift_stage != 0:
+                left_drive_smart_speed = forward + rotate_linear_lift
+                right_drive_smart_speed = forward - rotate_linear_lift
+            else:
+                left_drive_smart_speed = forward + rotate_linear
+                right_drive_smart_speed = forward - rotate_linear
         else:
             left_drive_smart_speed = forward + rotate_dynamic
             right_drive_smart_speed = forward - rotate_dynamic
@@ -451,23 +457,31 @@ def driver_control():
             lift_status = "up"
             pto_status = 1
             pto.set(pto_status)
-            lift_rotation.set_position(360, DEGREES)
-            wait(300, MSEC)
+            wait(200, MSEC)
             lift.spin(REVERSE, 100, PERCENT)
             
         if controller_1.axis2.position() < -90:
             lift_status = "down"
             lift.spin(FORWARD, 80, PERCENT)
-           
-        if lift_rotation.position(DEGREES) < 65 and lift_status == "up":
-            lift.set_stopping(HOLD)
-            lift_status = 0
-            lift.stop()
         
-        if lift_rotation.position(DEGREES) > 355 and lift_status == "down":
+        if lift_stage == 0:
+            if lift_rotation.position(TURNS) < -0.3 and lift_status == "up":
+                lift.set_stopping(HOLD)
+                lift_status = "stop"
+                lift_stage = 1
+                lift.stop()
+        elif lift_stage == 1:
+            if lift_rotation.position(TURNS) < -0.8 and lift_status == "up":
+                lift.set_stopping(HOLD)
+                lift_status = "stop"
+                lift_stage = 2
+                lift.stop()
+        
+        if lift_rotation.position(DEGREES) > -0.2 and lift_status == "down":
             lift.stop()
             lift.set_stopping(COAST)
-            lift_status = 0
+            lift_status = "stop"
+            lift_stage = 0
             pto_status = 0
             pto.set(pto_status)
             
