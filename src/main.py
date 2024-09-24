@@ -48,7 +48,7 @@ drivetrain = DriveTrain(left_drive_smart, right_drive_smart, 299.24 , 377.1, 304
 
 # Sensor & Pneumatics
 inertial = Inertial(Ports.PORT20)
-lift_rotation = Rotation(Ports.PORT12, False)
+lift_rotation = Rotation(Ports.PORT16, False)
 odometry = Rotation(Ports.PORT18, False)
 optical = Optical(Ports.PORT17)
 
@@ -58,9 +58,8 @@ lift_rotation.set_position(360, DEGREES)
 pto = DigitalOut(brain.three_wire_port.f)
 clamp = DigitalOut(brain.three_wire_port.b)
 paddle = DigitalOut(brain.three_wire_port.c)
-sorter = DigitalOut(brain.three_wire_port.d)
 indicator = DigitalOut(brain.three_wire_port.e)
-elevation = DigitalOut(brain.three_wire_port.g)
+elevation = DigitalOut(brain.three_wire_port.d)
 
 # Variables initialisation
 left_drive_smart_stopped = 0
@@ -354,7 +353,7 @@ def autonomous():
         pass
 #  Driver Control def
 def driver_control():
-    global left_drive_smart_stopped, right_drive_smart_stopped, pto_status, clamp_status, lift_status, lift_stage, ring_sort_status
+    global left_drive_smart_stopped, right_drive_smart_stopped, pto_status, clamp_status, lift_status, lift_stage, ring_sort_status, elevation_status, ring_sort_status
     drivetrain.set_stopping(COAST)
     lift_status = 0
     brain.timer.clear()
@@ -413,12 +412,12 @@ def driver_control():
         
         if controller_1.buttonR1.pressing():
             intake.spin(FORWARD, 100, PERCENT)
-            if ring_sort_status == "RED":
+            '''if ring_sort_status == "RED":
                 if not optical.color() == "RED":
                     intake.spin_for(REVERSE, 1, TURNS)
             elif ring_sort_status == "BLUE":
                 if not optical.color() == "BLUE":
-                    intake.spin_for(REVERSE, 1, TURNS)
+                    intake.spin_for(REVERSE, 1, TURNS)'''
         elif controller_1.buttonR2.pressing():
             intake.spin(REVERSE, 100, PERCENT)
                 
@@ -464,20 +463,25 @@ def driver_control():
             lift_status = "down"
             lift.spin(FORWARD, 80, PERCENT)
         
-        if lift_stage == 0:
-            if lift_rotation.position(TURNS) < -0.3 and lift_status == "up":
+        '''if lift_stage == 0:
+            if lift_rotation.position(TURNS) < 0.65 and lift_status == "up":
                 lift.set_stopping(HOLD)
                 lift_status = "stop"
                 lift_stage = 1
                 lift.stop()
         elif lift_stage == 1:
-            if lift_rotation.position(TURNS) < -0.8 and lift_status == "up":
+            if lift_rotation.position(TURNS) < -0.1 and lift_status == "up":
                 lift.set_stopping(HOLD)
                 lift_status = "stop"
                 lift_stage = 2
-                lift.stop()
+                lift.stop()'''
+        if lift_rotation.position(TURNS) < -0.1 and lift_status == "up":
+            lift.set_stopping(HOLD)
+            lift_status = "stop"
+            lift_stage = 2
+            lift.stop()
         
-        if lift_rotation.position(DEGREES) > -0.2 and lift_status == "down":
+        if lift_rotation.position(TURNS) > 0.9 and lift_status == "down":
             lift.stop()
             lift.set_stopping(COAST)
             lift_status = "stop"
@@ -491,8 +495,6 @@ def driver_control():
             elevation.set(elevation_status)
             while controller_1.buttonX.pressing():
                 wait(30, MSEC)
-        if brain.timer.time(SECONDS) > 104:
-            elevation.set(False)
 
 #choose team
 team_position = team_choosing() 
