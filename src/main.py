@@ -493,6 +493,9 @@ def driver_control():
         if controller_1.buttonX.pressing():
             elevation_status = not elevation_status
             elevation.set(elevation_status)
+            if clamp_status == 1:
+                clamp_status = 0
+                clamp.set(clamp_status)
             while controller_1.buttonX.pressing():
                 wait(30, MSEC)
 
