@@ -51,7 +51,7 @@ inertial = Inertial(Ports.PORT20)
 lift_rotation = Rotation(Ports.PORT16, False)
 odometry = Rotation(Ports.PORT18, False)
 optical = Optical(Ports.PORT17)
-
+distance = Distance(Ports.PORT15)
 lift_rotation.set_position(360, DEGREES)
 
 
@@ -71,6 +71,7 @@ clamp_status = 0 #0 release, 1 clamp
 lift_status = "stop" #direction of lift, up, down and stop
 lift_stage = 0 # 0 lowest, 2 heighest
 ring_sort_status = "Both" #Red, Blue and Both
+storage = []
 elevation_status = 0 #0 down, 1 up
 
 brain.screen.draw_image_from_file("begin.png", 0, 0)
@@ -240,9 +241,11 @@ def autopath(plan_list): #coordinate and radius needs to be mm, in form of [rp.C
         drivetrain_forward(plan_list[1][i]/159.59) #convert mm into turns'''
          
 # Autonomous def
-def autonomous():
+def autonomous(): #1 share goal side, 2 share ring side
+    global ring_sort_status
     intake.set_velocity(100, PERCENT)
     if team_position == "red_1":
+        ring_sort_status = "Red"
         drivetrain_forward(-900, "MM")
         drivetrain_turn_left(20)
         drivetrain_forward(-531, "MM")
@@ -264,6 +267,7 @@ def autonomous():
         drivetrain_forward(400, "MM")
         
     if team_position == "red_2":
+        ring_sort_status = "Red"
         pto_status = 1
         pto.set(pto_status)
         lift.spin(REVERSE, 100, PERCENT)
@@ -297,6 +301,7 @@ def autonomous():
         
         
     if team_position == "blue_1":
+        ring_sort_status = "Blue"
         drivetrain_forward(-900, "MM")
         drivetrain_turn_right(20)
         drivetrain_forward(-531, "MM")
@@ -318,6 +323,7 @@ def autonomous():
         drivetrain_forward(400, "MM")
         
     if team_position == "blue_2":
+        ring_sort_status = "Blue"
         pto_status = 1
         pto.set(pto_status)
         lift.spin(REVERSE, 100, PERCENT)
@@ -350,7 +356,10 @@ def autonomous():
         drivetrain_forward(811, "MM")
         
     if team_position == "skill":
-        pass
+        ring_sort_status = "Red"
+        drivetrain_forward(-1.5, "TURNS")
+        drivetrain_forward(-0.3, "TURNS")
+        
 #  Driver Control def
 def driver_control():
     global left_drive_smart_stopped, right_drive_smart_stopped, pto_status, clamp_status, lift_status, lift_stage, ring_sort_status, elevation_status, ring_sort_status
@@ -363,7 +372,7 @@ def driver_control():
         pto.set(pto_status)
     # Drive Train
         #arcade drive
-        ratio = 1.5
+        ratio = 1.4
         forward = 100*math.sin(((controller_1.axis3.position()**3)/636620))
         rotate_dynamic = (100/ratio)*math.sin((abs((forward**3))/636620))*math.sin(((controller_1.axis1.position()**3)/636620))
         rotate_linear = 50*math.sin(((controller_1.axis1.position()**3)/636620))
@@ -412,12 +421,6 @@ def driver_control():
         
         if controller_1.buttonR1.pressing():
             intake.spin(FORWARD, 100, PERCENT)
-            '''if ring_sort_status == "RED":
-                if not optical.color() == "RED":
-                    intake.spin_for(REVERSE, 1, TURNS)
-            elif ring_sort_status == "BLUE":
-                if not optical.color() == "BLUE":
-                    intake.spin_for(REVERSE, 1, TURNS)'''
         elif controller_1.buttonR2.pressing():
             intake.spin(REVERSE, 100, PERCENT)
                 
@@ -481,7 +484,7 @@ def driver_control():
             lift_stage = 2
             lift.stop()
         
-        if lift_rotation.position(TURNS) > 0.9 and lift_status == "down":
+        if lift_rotation.position(TURNS) > 0.99 and lift_status == "down":
             lift.stop()
             lift.set_stopping(COAST)
             lift_status = "stop"
@@ -501,5 +504,6 @@ def driver_control():
 
 #choose team
 team_position = team_choosing() 
+inertial.calibrate()
 # Compe tition functions for the driver control & autonomous tasks
 competition = Competition(driver_control, autonomous)
