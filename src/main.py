@@ -73,6 +73,7 @@ lift_stage = 0 # 0 lowest, 2 heighest
 ring_sort_status = "Both" #Red, Blue and Both
 storage = []
 elevation_status = 0 #0 down, 1 up
+ring_storage = ""
 
 brain.screen.draw_image_from_file("begin.png", 0, 0)
 
@@ -219,7 +220,7 @@ def drivetrain_forward(target_turns: float, unit: str = "turns" ):
     drivetrain.drive(FORWARD)
     initial_turns = odometry.position(TURNS)
     current_turns = odometry.position(TURNS)
-    while not(target_turns-0.1 < current_turns - initial_turns < target_turns+0.1):
+    while not(target_turns-0.05 < current_turns - initial_turns < target_turns+0.05):
         error = target_turns-(current_turns-initial_turns)
         integral += error
         integral = max(min(integral, 30), -30)
@@ -362,11 +363,12 @@ def autonomous(): #1 share goal side, 2 share ring side
         
 #  Driver Control def
 def driver_control():
-    global left_drive_smart_stopped, right_drive_smart_stopped, pto_status, clamp_status, lift_status, lift_stage, ring_sort_status, elevation_status, ring_sort_status
+    global left_drive_smart_stopped, right_drive_smart_stopped, pto_status, clamp_status, lift_status, lift_stage, ring_sort_status, elevation_status, ring_sort_status, ring_storage
     drivetrain.set_stopping(COAST)
     lift_status = 0
     brain.timer.clear()
     # Process every 20 milliseconds
+    ring_sort_status = "RED"
     while True:
     # Status Update
         pto.set(pto_status)
@@ -418,11 +420,53 @@ def driver_control():
                     right_lift.spin(FORWARD)
             right_drive_smart.set_velocity(right_drive_smart_speed, PERCENT)
             right_drive_smart.spin(FORWARD)
-        
+            
+        if optical.color() == Color.RED:
+            ring_storage = "RED"
+        if optical.color() == Color.BLUE:
+            ring_storage = "BLUE"
+            
+         
         if controller_1.buttonR1.pressing():
             intake.spin(FORWARD, 100, PERCENT)
+            if ring_sort_status == "RED":
+                if distance.object_distance() < 15.0 and ring_storage == "RED":
+                    intake.set_velocity(100, PERCENT)
+                    wait(100, MSEC)
+                    intake.spin_for(REVERSE, 2, TURNS)
+                    while distance.object_distance() < 15.0:
+                        wait(30, MSEC)
+            elif ring_sort_status == "BLUE":
+                if distance.object_distance() < 15.0 and ring_storage == "BLUE":
+                    intake.set_velocity(100, PERCENT)
+                    wait(100, MSEC)
+                    intake.spin_for(REVERSE, 2, TURNS)
+                    while distance.object_distance() < 15.0:
+                        wait(30, MSEC)    
         elif controller_1.buttonR2.pressing():
-            intake.spin(REVERSE, 100, PERCENT)
+            intake.spin(FORWARD, 100, PERCENT)
+            if ring_sort_status == "RED":
+                if distance.object_distance() < 15.0 and ring_storage == "BLUE":
+                    intake.set_velocity(100, PERCENT)
+                    intake.spin_for(REVERSE, 4, TURNS)
+                if distance.object_distance() < 15.0 and ring_storage == "RED":
+                    intake.set_velocity(100, PERCENT)
+                    wait(100, MSEC)
+                    intake.spin_for(REVERSE, 2, TURNS)
+                    while distance.object_distance() < 15.0:
+                        wait(30, MSEC)
+            elif ring_sort_status == "BLUE":
+                if distance.object_distance() < 15.0 and ring_storage == "RED":
+                    intake.set_velocity(100, PERCENT)
+                    intake.spin_for(REVERSE, 4, TURNS)
+                    while distance.object_distance() < 15.0:
+                        wait(30, MSEC) 
+                if distance.object_distance() < 15.0 and ring_storage == "BLUE":
+                    intake.set_velocity(100, PERCENT)
+                    wait(100, MSEC)
+                    intake.spin_for(REVERSE, 2, TURNS)
+                    while distance.object_distance() < 15.0:
+                        wait(30, MSEC)  
                 
         else:
             intake.stop()
@@ -442,27 +486,27 @@ def driver_control():
                 wait(30, MSEC)
             
         # ring sorting status control
-        if controller_2.buttonA.pressing():
+        if controller_1.buttonA.pressing():
             if ring_sort_status == "Red":
                 ring_sort_status = "Blue"
             elif ring_sort_status == "Blue":
                 ring_sort_status = "Both"
             elif ring_sort_status == "Both":
                 ring_sort_status = "Red"
-            controller_2.screen.set_cursor(1,1)
-            controller_2.screen.print("Color sorting: ", ring_sort_status)
+            controller_1.screen.set_cursor(1,1)
+            controller_1.screen.print("Color sorting: ", ring_sort_status)
             while controller_1.buttonA.pressing():
                 wait(30, MSEC)
                 
         #lift contol
-        if controller_1.axis2.position() > 90:
+        if controller_1.axis2.position() > 95:
             lift_status = "up"
             pto_status = 1
             pto.set(pto_status)
-            wait(200, MSEC)
+            wait(50, MSEC)
             lift.spin(REVERSE, 100, PERCENT)
             
-        if controller_1.axis2.position() < -90:
+        if controller_1.axis2.position() < -95:
             lift_status = "down"
             lift.spin(FORWARD, 80, PERCENT)
         
