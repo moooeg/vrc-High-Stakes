@@ -425,7 +425,6 @@ def driver_control():
             ring_storage = "RED"
         if optical.color() == Color.BLUE:
             ring_storage = "BLUE"
-            
          
         if controller_1.buttonR1.pressing():
             intake.spin(FORWARD, 100, PERCENT)
