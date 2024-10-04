@@ -73,7 +73,6 @@ lift_stage = 0 # 0 lowest, 2 heighest
 ring_sort_status = "Both" #Red, Blue and Both
 storage = []
 elevation_status = 0 #0 down, 1 up
-ring_storage = ""
 
 brain.screen.draw_image_from_file("begin.png", 0, 0)
 
@@ -235,6 +234,12 @@ def drivetrain_forward(target_turns: float, unit: str = "turns" ):
     wait(100, MSEC)
     drivetrain.set_stopping(COAST)
 
+# ring holding list def
+def add_color(new_color):
+    if len(storage) >= 2:
+        storage.pop(0)  # Remove the first color if the list is full
+    storage.append(new_color)
+
 '''
 def autopath(plan_list): #coordinate and radius needs to be mm, in form of [rp.Coordinate(x, y)]
     for i in range(len(plan_list[0])):
@@ -246,7 +251,6 @@ def autonomous(): #1 share goal side, 2 share ring side
     global ring_sort_status
     intake.set_velocity(100, PERCENT)
     if team_position == "red_1":
-        ring_sort_status = "Red"
         drivetrain.drive(REVERSE, 50, PERCENT)
         wait(1.5, SECONDS)
         drivetrain.stop()
@@ -268,41 +272,9 @@ def autonomous(): #1 share goal side, 2 share ring side
 
         
     if team_position == "red_2":
-        ring_sort_status = "Red"
-        pto_status = 1
-        pto.set(pto_status)
-        lift.spin(REVERSE, 100, PERCENT)
-        if lift_rotation.position() > 65:
-            lift.set_stopping(HOLD)
-            lift.stop()
-        drivetrain_forward(340, "MM")
-        lift.spin(FORWARD, 100, PERCENT)
-        wait(1, SECONDS)
-        lift.set_stopping(COAST)
-        lift.stop()
-        drivetrain_forward(-1095, "MM")
-        lift.spin(FORWARD, 100, PERCENT)
-        if lift_rotation.position() < 355:
-            lift.stop()
-        clamp_status = 1
-        clamp.set(clamp_status)
-        drivetrain_turn_right(120)
-        intake.spin(FORWARD)
-        drivetrain_forward(580, "MM")
-        drivetrain_turn_right(80)
-        drivetrain_forward(500, "MM")
-        wait(500, MSEC)
-        drivetrain_forward(-500, "MM")
-        drivetrain_turn_right(15)
-        drivetrain_forward(500, "MM")
-        wait(500, MSEC)
-        drivetrain_forward(-250, "MM")
-        drivetrain_turn_right(80)
-        drivetrain_forward(811, "MM")
-        
+        pass
         
     if team_position == "blue_1":
-        ring_sort_status = "Blue"
         drivetrain_forward(2.1)
         drivetrain.turn(RIGHT, 40, PERCENT)
         wait(0.85, SECONDS)
@@ -343,46 +315,13 @@ def autonomous(): #1 share goal side, 2 share ring side
         
         
     if team_position == "blue_2":
-        ring_sort_status = "Blue"
-        pto_status = 1
-        pto.set(pto_status)
-        lift.spin(REVERSE, 100, PERCENT)
-        if lift_rotation.position() > 65:
-            lift.set_stopping(HOLD)
-            lift.stop()
-        drivetrain_forward(340, "MM")
-        lift.spin(FORWARD, 100, PERCENT)
-        wait(1, SECONDS)
-        lift.set_stopping(COAST)
-        lift.stop()
-        drivetrain_forward(-1095, "MM")
-        lift.spin(FORWARD, 100, PERCENT)
-        if lift_rotation.position() < 355:
-            lift.stop()
-        clamp_status = 1
-        clamp.set(clamp_status)
-        drivetrain_turn_left(120)
-        intake.spin(FORWARD)
-        drivetrain_forward(580, "MM")
-        drivetrain_turn_left(80)
-        drivetrain_forward(500, "MM")
-        wait(500, MSEC)
-        drivetrain_forward(-500, "MM")
-        drivetrain_turn_left(15)
-        drivetrain_forward(500, "MM")
-        wait(500, MSEC)
-        drivetrain_forward(-250, "MM")
-        drivetrain_turn_left(80)
-        drivetrain_forward(811, "MM")
-        
+        pass
     if team_position == "skill":
-        ring_sort_status = "Red"
-        drivetrain_forward(-1.5, "TURNS")
-        drivetrain_forward(-0.3, "TURNS")
+        pass
         
 #  Driver Control def
 def driver_control():
-    global left_drive_smart_stopped, right_drive_smart_stopped, pto_status, clamp_status, lift_status, lift_stage, ring_sort_status, elevation_status, ring_sort_status, ring_storage
+    global left_drive_smart_stopped, right_drive_smart_stopped, pto_status, clamp_status, lift_status, lift_stage, ring_sort_status, elevation_status, ring_sort_status, storage
     drivetrain.set_stopping(COAST)
     lift_status = 0
     brain.timer.clear()
@@ -443,55 +382,65 @@ def driver_control():
             right_drive_smart.set_velocity(right_drive_smart_speed, PERCENT)
             right_drive_smart.spin(FORWARD)
             
+    #intake color sensor
         if optical.color() == Color.RED:
-            ring_storage = "RED"
-        if 160.0 < optical.hue() < 250.0:
-            ring_storage = "BLUE"
-        print(ring_storage)
-        if controller_1.buttonR1.pressing():
+            add_color("RED")
+        if 160.0 < optical.hue() < 250.0: # type: ignore
+            add_color("BLUE")
+            
+    #intake filter control
+        if controller_1.buttonR1.pressing(): # normal intake filter
             intake.spin(FORWARD, 100, PERCENT)
             if ring_sort_status == "RED":
-                if distance.object_distance() < 15.0 and ring_storage == "RED":
+                if distance.object_distance() < 15.0 and storage[0] == "RED":
                     intake.set_velocity(100, PERCENT)
                     wait(100, MSEC)
                     intake.spin_for(REVERSE, 2, TURNS)
                     while distance.object_distance() < 15.0:
                         wait(30, MSEC)
+                    storage.pop(0)
             elif ring_sort_status == "BLUE":
-                if distance.object_distance() < 15.0 and ring_storage == "BLUE":
-                    intake.set_velocity(100, PERCENT)
-                    wait(100, MSEC)
-                    intake.spin_for(REVERSE, 2, TURNS)
-                    while distance.object_distance() < 15.0:
-                        wait(30, MSEC)    
-        elif controller_1.buttonR2.pressing():
-            intake.spin(FORWARD, 100, PERCENT)
-            if ring_sort_status == "RED":
-                if distance.object_distance() < 15.0 and ring_storage == "BLUE":
-                    intake.set_velocity(100, PERCENT)
-                    intake.spin_for(REVERSE, 6, TURNS)
-                if distance.object_distance() < 15.0 and ring_storage == "RED":
+                if distance.object_distance() < 15.0 and storage[0] == "BLUE":
                     intake.set_velocity(100, PERCENT)
                     wait(100, MSEC)
                     intake.spin_for(REVERSE, 2, TURNS)
                     while distance.object_distance() < 15.0:
                         wait(30, MSEC)
-            elif ring_sort_status == "BLUE":
-                if distance.object_distance() < 15.0 and ring_storage == "RED":
+                    storage.pop(0)
+        elif controller_1.buttonR2.pressing(): # wall goal intake filter
+            intake.spin(FORWARD, 100, PERCENT)
+            if ring_sort_status == "RED":
+                if distance.object_distance() < 15.0 and storage[0] == "BLUE":
                     intake.set_velocity(100, PERCENT)
                     intake.spin_for(REVERSE, 6, TURNS)
                     while distance.object_distance() < 15.0:
                         wait(30, MSEC) 
-                if distance.object_distance() < 15.0 and ring_storage == "BLUE":
+                    storage.pop(0)
+                if distance.object_distance() < 15.0 and storage[0] == "RED":
                     intake.set_velocity(100, PERCENT)
                     wait(100, MSEC)
                     intake.spin_for(REVERSE, 2, TURNS)
                     while distance.object_distance() < 15.0:
-                        wait(30, MSEC)  
+                        wait(30, MSEC)
+                    storage.pop(0)
+            elif ring_sort_status == "BLUE":
+                if distance.object_distance() < 15.0 and storage[0] == "RED":
+                    intake.set_velocity(100, PERCENT)
+                    intake.spin_for(REVERSE, 6, TURNS)
+                    while distance.object_distance() < 15.0:
+                        wait(30, MSEC) 
+                    storage.pop(0)
+                if distance.object_distance() < 15.0 and storage[0] == "BLUE":
+                    intake.set_velocity(100, PERCENT)
+                    wait(100, MSEC)
+                    intake.spin_for(REVERSE, 2, TURNS)
+                    while distance.object_distance() < 15.0:
+                        wait(30, MSEC)
+                    storage.pop(0)     
         else:
             intake.stop()
        
-        # control
+    # paddle control
         if controller_1.buttonL1.pressing():
             paddle.set(True)
         else:
@@ -505,18 +454,17 @@ def driver_control():
             while controller_1.buttonL2.pressing():
                 wait(30, MSEC)
                 
-        #lift contol
+    #lift contol
         if controller_1.axis2.position() > 95:
             lift_status = "up"
             pto_status = 1
             pto.set(pto_status)
             wait(50, MSEC)
             lift.spin(REVERSE, 100, PERCENT)
-            
         if controller_1.axis2.position() < -95:
             lift_status = "down"
             lift.spin(FORWARD, 80, PERCENT)
-        
+            
         '''if lift_stage == 0:
             if lift_rotation.position(TURNS) < 0.65 and lift_status == "up":
                 lift.set_stopping(HOLD)
@@ -543,7 +491,7 @@ def driver_control():
             pto_status = 0
             pto.set(pto_status)
             
-        #elevation
+    #elevation
         if controller_1.buttonX.pressing():
             elevation_status = not elevation_status
             elevation.set(elevation_status)
