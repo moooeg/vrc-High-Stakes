@@ -208,9 +208,9 @@ def drivetrain_turn_left(target_angle: float):
     drivetrain.stop()
 
 # odometry def
-def drivetrain_forward(target_turns: float, unit: str = "turns" ):
+def drivetrain_forward(target_turns: float, unit: str = "turns"):
     if unit == "mm":
-        target_turns = target_turns/159.59
+        target_turns = target_turns / 159.59
     kp = 1
     ki = 2.5
     kd = 2
@@ -219,8 +219,10 @@ def drivetrain_forward(target_turns: float, unit: str = "turns" ):
     drivetrain.drive(FORWARD)
     initial_turns = odometry.position(TURNS)
     current_turns = odometry.position(TURNS)
-    while not(target_turns-0.05 < current_turns - initial_turns < target_turns+0.05):
-        error = target_turns-(current_turns-initial_turns)
+    false_condition_start_time = None
+    false_condition_duration = 0
+    while True:
+        error = target_turns - (current_turns - initial_turns)
         integral += error
         integral = max(min(integral, 30), -30)
         derivative = error - previous_error
@@ -229,10 +231,24 @@ def drivetrain_forward(target_turns: float, unit: str = "turns" ):
         odometry_output = max(min(odometry_output, 100), -100)
         drivetrain.set_drive_velocity(odometry_output, PERCENT)
         current_turns = odometry.position(TURNS)
+        if not (target_turns - 0.05 < current_turns - initial_turns < target_turns + 0.05):
+            # Reset the timer if the condition is false
+            false_condition_start_time = None
+        else:
+            # Start tracking time if the condition has just become false
+            if false_condition_start_time is None:
+                false_condition_start_time = brain.timer.time(MSEC)
+            else:
+                false_condition_duration = brain.timer.time(MSEC) - false_condition_start_time
+
+        # Break the loop if the condition has been false for more than 0.5 seconds
+        if false_condition_duration >= 500:
+            break
     drivetrain.set_stopping(HOLD)
     drivetrain.stop()
     wait(100, MSEC)
     drivetrain.set_stopping(COAST)
+
 
 # ring holding list def
 def add_color(new_color):
@@ -247,7 +263,7 @@ def autopath(plan_list): #coordinate and radius needs to be mm, in form of [rp.C
         drivetrain_forward(plan_list[1][i]/159.59) #convert mm into turns'''
          
 # Autonomous def
-def autonomous(): #1 share goal side, 2 share ring side
+def autonomous(): #2 share goal side, 1 share ring side
     global ring_sort_status
     intake.set_velocity(100, PERCENT)
     if team_position == "red_1":
@@ -306,7 +322,6 @@ def autonomous(): #1 share goal side, 2 share ring side
         drivetrain_turn_right(60)
         drivetrain_forward(6)'''
 
-        
     if team_position == "red_2":
         pass
         
@@ -347,11 +362,10 @@ def autonomous(): #1 share goal side, 2 share ring side
         drivetrain_forward(1.2)
         wait(0.5, SECONDS)
         drivetrain_forward(-0.5)
-        
-        
-        
+             
     if team_position == "blue_2":
         pass
+    
     if team_position == "skill":
         intake.spin(FORWARD)
         wait(0.36, SECONDS)
