@@ -246,7 +246,7 @@ def autonomous(): #2 share goal side, 1 share ring side
         drivetrain.turn(LEFT, 43, PERCENT)
         wait(0.85, SECONDS)
         drivetrain.stop()
-        drivetrain_forward(-0.62, 100)
+        drivetrain_forward(-0.65, 100)
         intake.spin(FORWARD)
         wait(0.35, SECONDS)
         intake.stop()
@@ -278,6 +278,9 @@ def autonomous(): #2 share goal side, 1 share ring side
         drivetrain_forward(1.5, 100)
         wait(0.5, SECONDS)
         drivetrain_forward(-0.5, 100)
+        if distance.object_distance() < 15.0:
+            wait(1, SECONDS)
+            intake.stop()
         '''drivetrain.drive(REVERSE, 50, PERCENT)
         wait(1.5, SECONDS)
         drivetrain.stop()
@@ -305,7 +308,7 @@ def autonomous(): #2 share goal side, 1 share ring side
         drivetrain.turn(RIGHT, 43, PERCENT)
         wait(0.85, SECONDS)
         drivetrain.stop()
-        drivetrain_forward(-0.63, 100)
+        drivetrain_forward(-0.65, 100)
         intake.spin(FORWARD)
         wait(0.35, SECONDS)
         intake.stop()
@@ -337,6 +340,9 @@ def autonomous(): #2 share goal side, 1 share ring side
         drivetrain_forward(1.5, 100)
         wait(0.5, SECONDS)
         drivetrain_forward(-0.5, 100)
+        if distance.object_distance() < 15.0:
+            wait(1, SECONDS)
+            intake.stop()
              
     if team_position == "blue_2":
         pass
@@ -351,24 +357,44 @@ def autonomous(): #2 share goal side, 1 share ring side
         wait(0.34, SECONDS)
         drivetrain.stop()
         wait(0.3, SECONDS)
-        drivetrain_forward(-3.5, 70)
+        drivetrain_forward(-3.5, 80)
         clamp.set(True)
         intake.spin(FORWARD)
-        drivetrain.turn(RIGHT, 96, PERCENT)
+        drivetrain.turn(RIGHT, 94, PERCENT)
         wait(0.35, SECONDS)
         drivetrain.stop()
         wait(0.3, SECONDS)
         drivetrain_forward(3.8, 100)
-        drivetrain.turn(RIGHT, 95, PERCENT)
+        drivetrain.turn(RIGHT, 93, PERCENT)
         wait(0.35, SECONDS)
         drivetrain.stop()
         wait(0.3, SECONDS)
-        drivetrain_forward(3.9, 100)
+        drivetrain_forward(3.7, 100)
         drivetrain.turn(RIGHT, 90, PERCENT)
-        wait(0.38, SECONDS)
+        wait(0.36, SECONDS)
         drivetrain.stop()
         wait(0.3, SECONDS)
-        drivetrain_forward(5, 60)
+        drivetrain_forward(4, 38)
+        drivetrain_forward(-2.5, 60)
+        drivetrain.turn(LEFT, 93, PERCENT)
+        wait(0.23, SECONDS)
+        drivetrain.stop()
+        wait(0.3, SECONDS)
+        drivetrain_forward(2, 100)
+        wait(1.2, SECONDS)
+        drivetrain.turn(RIGHT, 95, PERCENT)
+        wait(0.70, SECONDS)
+        drivetrain.stop()
+        wait(0.3, SECONDS)
+        clamp.set(False)
+        drivetrain.drive(REVERSE, 60, PERCENT)
+        wait(1, SECONDS)
+        drivetrain_forward(2, 100)
+        drivetrain.turn(RIGHT, 98, PERCENT)
+        wait(0.45, SECONDS)
+        drivetrain.stop()
+        wait(0.3, SECONDS)
+        drivetrain_forward(-9, 100)
         
         
 #  Driver Control def
@@ -377,23 +403,29 @@ def driver_control():
     drivetrain.set_stopping(COAST)
     lift_status = 0
     brain.timer.clear()
+    intake.set_velocity(100, PERCENT)
     if team_position == "red_1" or team_position == "red_2":
         ring_sort_status = "BLUE"
     if team_position == "blue_1" or team_position == "blue_2":
         ring_sort_status = "RED"
+    if team_position == "skill":
+        intake.spin(FORWARD)
+        wait(0.36, SECONDS)
+        intake.stop()
     # Process every 20 milliseconds
     while True:
     # Status Update
         pto.set(pto_status)
     # Drive Train
         #arcade drive
-        ratio = 1.3
-        forward = 70*math.sin(((controller_1.axis3.position()**3)/636620))
+        ratio = 1.5 #bigger the number, less the sensitive
+        forward = 100*math.sin(((controller_1.axis3.position()**3)/636620))
+        if controller_1.axis3.position() < 0:
+            forward = 0.4*forward
         rotate_dynamic = (100/ratio)*math.sin((abs((forward**3))/636620))*math.sin(((controller_1.axis1.position()**3)/636620))
         rotate_linear = 50*math.sin(((controller_1.axis1.position()**3)/636620))
         rotate_linear_lift = 35*math.sin(((controller_1.axis1.position()**3)/636620))
-
-        if -35 <= forward <= 35:
+        if -30 <= forward <= 30:
             if lift_stage != 0:
                 left_drive_smart_speed = forward + rotate_linear_lift
                 right_drive_smart_speed = forward - rotate_linear_lift
