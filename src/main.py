@@ -236,12 +236,43 @@ def autopath(plan_list): #coordinate and radius needs to be mm, in form of [rp.C
     for i in range(len(plan_list[0])):
         drivetrain_turn(plan_list[0][i])
         drivetrain_forward(plan_list[1][i]/159.59) #convert mm into turns'''
-         
+
+#ring sorting function
+def ring_sorting_red():
+    while True:
+        if optical.color() == Color.RED:
+            add_color("RED")
+        if 160.0 < optical.hue() < 250.0: # type: ignore
+            add_color("BLUE")
+        if distance.object_distance() < 15.0 and storage[0] == "RED":
+            intake.set_velocity(100, PERCENT)
+            wait(100, MSEC)
+            intake.spin_for(REVERSE, 2, TURNS)
+            while distance.object_distance() < 15.0:
+                wait(30, MSEC)
+            storage.pop(0)
+
+def ring_sorting_blue():
+    while True:
+        if optical.color() == Color.RED:
+            add_color("RED")
+        if 160.0 < optical.hue() < 250.0: # type: ignore
+            add_color("BLUE")
+        if distance.object_distance() < 15.0 and storage[0] == "BLUE":
+            intake.set_velocity(100, PERCENT)
+            wait(100, MSEC)
+            intake.spin_for(REVERSE, 2, TURNS)
+            while distance.object_distance() < 15.0:
+                wait(30, MSEC)
+            storage.pop(0)
+
+
 # Autonomous def
 def autonomous(): #2 share goal side, 1 share ring side
     global ring_sort_status
     intake.set_velocity(100, PERCENT)
     if team_position == "red_1":
+        Thread(ring_sorting_blue)
         drivetrain_forward(2, 100)
         drivetrain.turn(LEFT, 43, PERCENT)
         wait(0.85, SECONDS)
@@ -301,9 +332,11 @@ def autonomous(): #2 share goal side, 1 share ring side
         drivetrain_forward(6)'''
 
     if team_position == "red_2":
-        drivetrain_forward(8.66, 50)
+        Thread(ring_sorting_blue)
+        intake.spin_for(FORWARD, 10000000, TURNS)
         
     if team_position == "blue_1":
+        Thread(ring_sorting_red)
         drivetrain_forward(2.2, 100)
         drivetrain.turn(RIGHT, 43, PERCENT)
         wait(0.85, SECONDS)
@@ -374,8 +407,8 @@ def autonomous(): #2 share goal side, 1 share ring side
         wait(0.36, SECONDS)
         drivetrain.stop()
         wait(0.3, SECONDS)
-        drivetrain_forward(4, 38)
-        drivetrain_forward(-2.5, 60)
+        drivetrain_forward(4.3, 36)
+        drivetrain_forward(-2.7, 80)
         drivetrain.turn(LEFT, 93, PERCENT)
         wait(0.23, SECONDS)
         drivetrain.stop()
@@ -387,15 +420,52 @@ def autonomous(): #2 share goal side, 1 share ring side
         drivetrain.stop()
         wait(0.3, SECONDS)
         clamp.set(False)
-        drivetrain.drive(REVERSE, 60, PERCENT)
-        wait(1, SECONDS)
+        drivetrain.drive(REVERSE, 70, PERCENT)
+        wait(2, SECONDS)
         drivetrain_forward(2, 100)
-        drivetrain.turn(RIGHT, 98, PERCENT)
-        wait(0.45, SECONDS)
+        drivetrain.turn(RIGHT, 100, PERCENT)
+        wait(0.43, SECONDS)
+        drivetrain.stop()
+        drivetrain.drive(FORWARD, 70, PERCENT)
+        wait(1, SECONDS)
+        drivetrain.stop()
+        drivetrain_forward(-14, 100)
+        clamp.set(True)
+        
+        drivetrain.turn(LEFT, 94, PERCENT)
+        wait(0.35, SECONDS)
         drivetrain.stop()
         wait(0.3, SECONDS)
-        drivetrain_forward(-9, 100)
-        
+        drivetrain_forward(3.8, 100)
+        drivetrain.turn(LEFT, 93, PERCENT)
+        wait(0.35, SECONDS)
+        drivetrain.stop()
+        wait(0.3, SECONDS)
+        drivetrain_forward(3.7, 100)
+        drivetrain.turn(LEFT, 90, PERCENT)
+        wait(0.36, SECONDS)
+        drivetrain.stop()
+        wait(0.3, SECONDS)
+        drivetrain_forward(4.3, 36)
+        drivetrain_forward(-2.7, 80)
+        drivetrain.turn(RIGHT, 93, PERCENT)
+        wait(0.23, SECONDS)
+        drivetrain.stop()
+        wait(0.3, SECONDS)
+        drivetrain_forward(2, 100)
+        wait(1.2, SECONDS)
+        drivetrain.turn(LEFT, 95, PERCENT)
+        wait(0.70, SECONDS)
+        drivetrain.stop()
+        wait(0.3, SECONDS)
+        clamp.set(False)
+        drivetrain.drive(REVERSE, 70, PERCENT)
+        wait(1.5, SECONDS)
+        drivetrain_forward(2, 100)
+        drivetrain.turn(LEFT, 100, PERCENT)
+        wait(0.43, SECONDS)
+        drivetrain.stop()
+        wait(0.3, SECONDS)
         
 #  Driver Control def
 def driver_control():
@@ -528,7 +598,9 @@ def driver_control():
                         intake.spin_for(REVERSE, 2, TURNS)
                         while distance.object_distance() < 15.0:
                             wait(30, MSEC)
-                        storage.pop(0)     
+                        storage.pop(0)
+            elif controller_1.buttonB.pressing():
+                intake.spin(REVERSE, 100, PERCENT)     
             else:
                 intake.stop()
        
