@@ -238,33 +238,28 @@ def autopath(plan_list): #coordinate and radius needs to be mm, in form of [rp.C
         drivetrain_forward(plan_list[1][i]/159.59) #convert mm into turns'''
 
 #ring sorting function
-def ring_sorting_red():
+def ring_sorting(colour):
     while True:
         if optical.color() == Color.RED:
             add_color("RED")
         if 160.0 < optical.hue() < 250.0: # type: ignore
             add_color("BLUE")
-        if distance.object_distance() < 15.0 and storage[0] == "RED":
-            intake.set_velocity(100, PERCENT)
-            wait(100, MSEC)
-            intake.spin_for(REVERSE, 2, TURNS)
-            while distance.object_distance() < 15.0:
-                wait(30, MSEC)
-            storage.pop(0)
-
-def ring_sorting_blue():
-    while True:
-        if optical.color() == Color.RED:
-            add_color("RED")
-        if 160.0 < optical.hue() < 250.0: # type: ignore
-            add_color("BLUE")
-        if distance.object_distance() < 15.0 and storage[0] == "BLUE":
-            intake.set_velocity(100, PERCENT)
-            wait(100, MSEC)
-            intake.spin_for(REVERSE, 2, TURNS)
-            while distance.object_distance() < 15.0:
-                wait(30, MSEC)
-            storage.pop(0)
+        if colour == "RED":
+            if distance.object_distance() < 15.0 and storage[0] == "RED":
+                intake.set_velocity(100, PERCENT)
+                wait(100, MSEC)
+                intake.spin_for(REVERSE, 2, TURNS)
+                while distance.object_distance() < 15.0:
+                    wait(30, MSEC)
+                storage.pop(0)
+        elif colour == "BLUE":
+            if distance.object_distance() < 15.0 and storage[0] == "BLUE":
+                intake.set_velocity(100, PERCENT)
+                wait(100, MSEC)
+                intake.spin_for(REVERSE, 2, TURNS)
+                while distance.object_distance() < 15.0:
+                    wait(30, MSEC)
+                storage.pop(0)
 
 
 # Autonomous def
@@ -272,7 +267,7 @@ def autonomous(): #2 share goal side, 1 share ring side
     global ring_sort_status
     intake.set_velocity(100, PERCENT)
     if team_position == "red_1":
-        Thread(ring_sorting_blue)
+        Thread(ring_sorting,("BLUE",))
         drivetrain_forward(2, 100)
         drivetrain.turn(LEFT, 43, PERCENT)
         wait(0.85, SECONDS)
@@ -308,10 +303,8 @@ def autonomous(): #2 share goal side, 1 share ring side
         drivetrain.stop()
         drivetrain_forward(1.5, 100)
         wait(0.5, SECONDS)
-        drivetrain_forward(-0.5, 100)
-        if distance.object_distance() < 15.0:
-            wait(1, SECONDS)
-            intake.stop()
+        drivetrain_forward(-2, 100)
+
         '''drivetrain.drive(REVERSE, 50, PERCENT)
         wait(1.5, SECONDS)
         drivetrain.stop()
@@ -332,11 +325,11 @@ def autonomous(): #2 share goal side, 1 share ring side
         drivetrain_forward(6)'''
 
     if team_position == "red_2":
-        Thread(ring_sorting_blue)
+        Thread(ring_sorting,("BLUE",))
         intake.spin_for(FORWARD, 10000000, TURNS)
         
     if team_position == "blue_1":
-        Thread(ring_sorting_red)
+        Thread(ring_sorting,("RED",))
         drivetrain_forward(2.2, 100)
         drivetrain.turn(RIGHT, 43, PERCENT)
         wait(0.85, SECONDS)
@@ -372,15 +365,13 @@ def autonomous(): #2 share goal side, 1 share ring side
         drivetrain.stop()
         drivetrain_forward(1.5, 100)
         wait(0.5, SECONDS)
-        drivetrain_forward(-0.5, 100)
-        if distance.object_distance() < 15.0:
-            wait(1, SECONDS)
-            intake.stop()
+        drivetrain_forward(-2, 100)
              
     if team_position == "blue_2":
         pass
-    
+        
     if team_position == "skill":
+        #mobile goal 1
         intake.spin(FORWARD)
         wait(0.36, SECONDS)
         intake.stop()
@@ -407,13 +398,13 @@ def autonomous(): #2 share goal side, 1 share ring side
         wait(0.36, SECONDS)
         drivetrain.stop()
         wait(0.3, SECONDS)
-        drivetrain_forward(4.3, 36)
-        drivetrain_forward(-2.7, 80)
+        drivetrain_forward(4.5, 30)
+        drivetrain_forward(-3, 100)
         drivetrain.turn(LEFT, 93, PERCENT)
         wait(0.23, SECONDS)
         drivetrain.stop()
         wait(0.3, SECONDS)
-        drivetrain_forward(2, 100)
+        drivetrain_forward(2.3, 100)
         wait(1.2, SECONDS)
         drivetrain.turn(RIGHT, 95, PERCENT)
         wait(0.70, SECONDS)
@@ -424,17 +415,24 @@ def autonomous(): #2 share goal side, 1 share ring side
         wait(2, SECONDS)
         drivetrain_forward(2, 100)
         drivetrain.turn(RIGHT, 100, PERCENT)
-        wait(0.43, SECONDS)
+        wait(0.4, SECONDS)
         drivetrain.stop()
+        intake.stop()
+        wait(0.5, SECONDS)
         drivetrain.drive(FORWARD, 70, PERCENT)
         wait(1, SECONDS)
         drivetrain.stop()
-        drivetrain_forward(-14, 100)
+        drivetrain.drive(REVERSE, 100, PERCENT)
+        wait(2.1, SECONDS)
+        drivetrain.drive(REVERSE, 30, PERCENT)
+        wait(1.3, SECONDS)
+        drivetrain.stop()
+        #mobile goal 2
         clamp.set(True)
-        
         drivetrain.turn(LEFT, 94, PERCENT)
         wait(0.35, SECONDS)
         drivetrain.stop()
+        intake.spin(FORWARD)
         wait(0.3, SECONDS)
         drivetrain_forward(3.8, 100)
         drivetrain.turn(LEFT, 93, PERCENT)
@@ -443,16 +441,16 @@ def autonomous(): #2 share goal side, 1 share ring side
         wait(0.3, SECONDS)
         drivetrain_forward(3.7, 100)
         drivetrain.turn(LEFT, 90, PERCENT)
-        wait(0.36, SECONDS)
+        wait(0.37, SECONDS)
         drivetrain.stop()
         wait(0.3, SECONDS)
-        drivetrain_forward(4.3, 36)
-        drivetrain_forward(-2.7, 80)
-        drivetrain.turn(RIGHT, 93, PERCENT)
+        drivetrain_forward(4.5, 30)
+        drivetrain_forward(-3, 80)
+        drivetrain.turn(RIGHT, 95, PERCENT)
         wait(0.23, SECONDS)
         drivetrain.stop()
         wait(0.3, SECONDS)
-        drivetrain_forward(2, 100)
+        drivetrain_forward(2.3, 100)
         wait(1.2, SECONDS)
         drivetrain.turn(LEFT, 95, PERCENT)
         wait(0.70, SECONDS)
@@ -461,17 +459,24 @@ def autonomous(): #2 share goal side, 1 share ring side
         clamp.set(False)
         drivetrain.drive(REVERSE, 70, PERCENT)
         wait(1.5, SECONDS)
-        drivetrain_forward(2, 100)
-        drivetrain.turn(LEFT, 100, PERCENT)
-        wait(0.43, SECONDS)
+        #elevation
+        elevation.set(True)
+        drivetrain.drive(FORWARD, 100, PERCENT)
+        time_out = 0
+        while inertial.orientation(OrientationType.PITCH, DEGREES) < 16:
+            wait(0.5, SECONDS)
+        drivetrain.drive(REVERSE, 50, PERCENT)
+        wait(0.1, SECONDS)
         drivetrain.stop()
-        wait(0.3, SECONDS)
+        intake.stop()
         
 #  Driver Control def
 def driver_control():
     global left_drive_smart_stopped, right_drive_smart_stopped, pto_status, clamp_status, lift_status, lift_stage, ring_sort_status, elevation_status, ring_sort_status, storage
     drivetrain.set_stopping(COAST)
     lift_status = 0
+    #total_rotate = 0 integral
+    #ki = -0.5#integral
     brain.timer.clear()
     intake.set_velocity(100, PERCENT)
     if team_position == "red_1" or team_position == "red_2":
@@ -491,11 +496,13 @@ def driver_control():
         ratio = 1.5 #bigger the number, less the sensitive
         forward = 100*math.sin(((controller_1.axis3.position()**3)/636620))
         if controller_1.axis3.position() < 0:
-            forward = 0.4*forward
+            forward = 0.6*forward
         rotate_dynamic = (100/ratio)*math.sin((abs((forward**3))/636620))*math.sin(((controller_1.axis1.position()**3)/636620))
         rotate_linear = 50*math.sin(((controller_1.axis1.position()**3)/636620))
         rotate_linear_lift = 35*math.sin(((controller_1.axis1.position()**3)/636620))
-        if -30 <= forward <= 30:
+        #total_rotate += rotate_dynamic#integral
+        if -40 <= forward <= 40:
+            #total_rotate = 0#integral
             if lift_stage != 0:
                 left_drive_smart_speed = forward + rotate_linear_lift
                 right_drive_smart_speed = forward - rotate_linear_lift
@@ -503,8 +510,8 @@ def driver_control():
                 left_drive_smart_speed = forward + rotate_linear
                 right_drive_smart_speed = forward - rotate_linear
         else:
-            left_drive_smart_speed = forward + rotate_dynamic
-            right_drive_smart_speed = forward - rotate_dynamic
+            left_drive_smart_speed = forward + (rotate_dynamic)#integral
+            right_drive_smart_speed = forward - (rotate_dynamic)
 
         if left_drive_smart_speed < 3 and left_drive_smart_speed > -3:
             if left_drive_smart_stopped:
@@ -555,16 +562,16 @@ def driver_control():
                 intake.spin(FORWARD, 100, PERCENT)
                 if ring_sort_status == "RED":
                     if distance.object_distance() < 15.0 and storage[0] == "RED":
-                        intake.set_velocity(100, PERCENT)
                         wait(100, MSEC)
+                        intake.set_velocity(100, PERCENT)
                         intake.spin_for(REVERSE, 2, TURNS)
                         while distance.object_distance() < 15.0:
                             wait(30, MSEC)
                         storage.pop(0)
                 elif ring_sort_status == "BLUE":
                     if distance.object_distance() < 15.0 and storage[0] == "BLUE":
-                        intake.set_velocity(100, PERCENT)
                         wait(100, MSEC)
+                        intake.set_velocity(100, PERCENT)
                         intake.spin_for(REVERSE, 2, TURNS)
                         while distance.object_distance() < 15.0:
                             wait(30, MSEC)
@@ -641,7 +648,7 @@ def driver_control():
                 lift_status = "stop"
                 lift_stage = 2
                 lift.stop()'''
-        if lift_rotation.position(TURNS) < -0.1 and lift_status == "up":
+        if lift_rotation.position(TURNS) < -0.15 and lift_status == "up":
             lift.set_stopping(HOLD)
             lift_status = "stop"
             lift_stage = 2
