@@ -562,7 +562,7 @@ def driver_control():
                 intake.spin(FORWARD, 100, PERCENT)
                 if ring_sort_status == "RED":
                     if distance.object_distance() < 15.0 and storage[0] == "RED":
-                        wait(100, MSEC)
+                        wait(80, MSEC)
                         intake.set_velocity(100, PERCENT)
                         intake.spin_for(REVERSE, 2, TURNS)
                         while distance.object_distance() < 15.0:
@@ -570,7 +570,7 @@ def driver_control():
                         storage.pop(0)
                 elif ring_sort_status == "BLUE":
                     if distance.object_distance() < 15.0 and storage[0] == "BLUE":
-                        wait(100, MSEC)
+                        wait(80, MSEC)
                         intake.set_velocity(100, PERCENT)
                         intake.spin_for(REVERSE, 2, TURNS)
                         while distance.object_distance() < 15.0:
@@ -579,7 +579,7 @@ def driver_control():
             elif controller_1.buttonR2.pressing(): # wall goal intake filter
                 intake.spin(FORWARD, 100, PERCENT)
                 if ring_sort_status == "RED":
-                    if distance.object_distance() < 15.0 and storage[0] == "BLUE":
+                    if distance.object_distance() < 30.0 and storage[0] == "BLUE":
                         intake.set_velocity(100, PERCENT)
                         intake.spin_for(REVERSE, 6, TURNS)
                         while distance.object_distance() < 15.0:
@@ -593,7 +593,7 @@ def driver_control():
                             wait(30, MSEC)
                         storage.pop(0)
                 elif ring_sort_status == "BLUE":
-                    if distance.object_distance() < 15.0 and storage[0] == "RED":
+                    if distance.object_distance() < 30.0 and storage[0] == "RED":
                         intake.set_velocity(100, PERCENT)
                         intake.spin_for(REVERSE, 6, TURNS)
                         while distance.object_distance() < 15.0:
