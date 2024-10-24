@@ -54,7 +54,6 @@ optical = Optical(Ports.PORT17)
 distance = Distance(Ports.PORT15)
 lift_rotation.set_position(360, DEGREES)
 
-
 pto = DigitalOut(brain.three_wire_port.f)
 clamp = DigitalOut(brain.three_wire_port.b)
 paddle = DigitalOut(brain.three_wire_port.c)
@@ -245,7 +244,7 @@ def ring_sorting(colour):
         if 160.0 < optical.hue() < 250.0: # type: ignore
             add_color("BLUE")
         if colour == "RED":
-            if distance.object_distance() < 15.0 and storage[0] == "RED":
+            if distance.object_distance() < 15.0 and len(storage) > 0 and storage[0] == "RED":
                 intake.set_velocity(100, PERCENT)
                 wait(100, MSEC)
                 intake.spin_for(REVERSE, 2, TURNS)
@@ -253,7 +252,7 @@ def ring_sorting(colour):
                     wait(30, MSEC)
                 storage.pop(0)
         elif colour == "BLUE":
-            if distance.object_distance() < 15.0 and storage[0] == "BLUE":
+            if distance.object_distance() < 15.0 and len(storage) > 0 and storage[0] == "BLUE":
                 intake.set_velocity(100, PERCENT)
                 wait(100, MSEC)
                 intake.spin_for(REVERSE, 2, TURNS)
@@ -325,8 +324,7 @@ def autonomous(): #2 share goal side, 1 share ring side
         drivetrain_forward(6)'''
 
     if team_position == "red_2":
-        Thread(ring_sorting,("BLUE",))
-        intake.spin_for(FORWARD, 10000000, TURNS)
+        pass
         
     if team_position == "blue_1":
         Thread(ring_sorting,("RED",))
@@ -626,13 +624,13 @@ def driver_control():
                 wait(30, MSEC)
                 
     # lift contol
-        if controller_1.axis2.position() > 95:
+        if controller_1.axis2.position() > 95 and lift_stage == 0:
             lift_status = "up"
             pto_status = 1
             pto.set(pto_status)
             wait(50, MSEC)
             lift.spin(REVERSE, 100, PERCENT)
-        if controller_1.axis2.position() < -95:
+        if controller_1.axis2.position() < -95 and lift_stage == 1:
             lift_status = "down"
             lift.spin(FORWARD, 80, PERCENT)
             
@@ -648,10 +646,10 @@ def driver_control():
                 lift_status = "stop"
                 lift_stage = 2
                 lift.stop()'''
-        if lift_rotation.position(TURNS) < -0.15 and lift_status == "up":
+        if lift_rotation.position(TURNS) < -0.2 and lift_status == "up":
             lift.set_stopping(HOLD)
             lift_status = "stop"
-            lift_stage = 2
+            lift_stage = 1
             lift.stop()
         
         if lift_rotation.position(TURNS) > 0.99 and lift_status == "down":
