@@ -304,25 +304,6 @@ def autonomous(): #2 share goal side, 1 share ring side
         wait(0.1, SECONDS)
         drivetrain_forward(-2, 100)
 
-        '''drivetrain.drive(REVERSE, 50, PERCENT)
-        wait(1.5, SECONDS)
-        drivetrain.stop()
-        wait(0.5, SECONDS)
-        clamp.set(True)
-        drivetrain_turn_right(50)
-        intake.spin(FORWARD)
-        drivetrain_forward(3.5)
-        drivetrain_turn_right(70)
-        drivetrain_forward(1.3)
-        wait(0.5, SECONDS)
-        drivetrain_forward(-0.5)
-        drivetrain_turn_right(15)
-        drivetrain_forward(0.8)
-        wait(0.5, SECONDS)
-        drivetrain_forward(-2)
-        drivetrain_turn_right(60)
-        drivetrain_forward(6)'''
-
     if team_position == "red_2":
         pass
         
@@ -496,7 +477,7 @@ def driver_control():
         if controller_1.axis3.position() < 0:
             forward = 0.6*forward
         rotate_dynamic = (100/ratio)*math.sin((abs((forward**3))/636620))*math.sin(((controller_1.axis1.position()**3)/636620))
-        rotate_linear = 50*math.sin(((controller_1.axis1.position()**3)/636620))
+        rotate_linear = 45*math.sin(((controller_1.axis1.position()**3)/636620))
         rotate_linear_lift = 35*math.sin(((controller_1.axis1.position()**3)/636620))
         #total_rotate += rotate_dynamic#integral
         if -40 <= forward <= 40:
