@@ -50,6 +50,7 @@ drivetrain = DriveTrain(left_drive_smart, right_drive_smart, 299.24 , 377.1, 304
 inertial = Inertial(Ports.PORT20)
 lift_rotation = Rotation(Ports.PORT16, False)
 odometry = Rotation(Ports.PORT18, False)
+odometry_turn = Rotation(Ports.PORT14, False)
 optical = Optical(Ports.PORT17)
 distance = Distance(Ports.PORT15)
 lift_rotation.set_position(360, DEGREES)
@@ -161,7 +162,7 @@ def team_choosing():
                 wait(5, MSEC)
         wait(5, MSEC)
 
-# PID turn def
+'''# PID turn def
 def drivetrain_turn_right(target_angle: float):
     #change kp, ki, kd, accoding to the robot
     kp = 0.4
@@ -182,7 +183,7 @@ def drivetrain_turn_right(target_angle: float):
         pid_output = max(min(pid_output, 100), -100)
         drivetrain.set_turn_velocity(pid_output, PERCENT)
         current_angle = inertial.heading(DEGREES)
-    drivetrain.stop()
+    drivetrain.stop()'''
 
 # odometry def
 def drivetrain_forward(target_turns: float, speed: int,  unit: str = "turns"):
@@ -223,6 +224,42 @@ def drivetrain_forward(target_turns: float, speed: int,  unit: str = "turns"):
             break
     drivetrain.stop()
 
+def drivetrain_turn(target_turns: float, speed: int,  unit: str = "turns"):
+    kp = 30
+    ki = 0.25
+    kd = 0.3
+    previous_error = 0
+    integral = 0
+    drivetrain.turn(RIGHT)
+    initial_turns = odometry_turn.position(TURNS)
+    current_turns = odometry_turn.position(TURNS)
+    false_condition_start_time = None
+    false_condition_duration = 0
+    while True:
+        error = target_turns - (current_turns - initial_turns)
+        integral += error
+        integral = max(min(integral, 30), -30)
+        derivative = error - previous_error
+        odometry_output = (kp * error) + (ki * integral) + (kd * derivative)
+        previous_error = error
+        odometry_output = (speed/100)*max(min(odometry_output, 100), -100)
+        drivetrain.set_drive_velocity(odometry_output, PERCENT)
+        current_turns = odometry_turn.position(TURNS)
+        if not (target_turns - 0.05 < current_turns - initial_turns < target_turns):
+            # Reset the timer if the condition is false
+            false_condition_start_time = None
+        else:
+            # Start tracking time if the condition has just become false
+            if false_condition_start_time is None:
+                false_condition_start_time = brain.timer.time(MSEC)
+            else:
+                false_condition_duration = brain.timer.time(MSEC) - false_condition_start_time
+
+        # Break the loop if the condition has been false for more than 0.5 seconds
+        if false_condition_duration >= 50:
+            break
+    drivetrain.stop()
+
 
 # ring holding list def
 def add_color(new_color):
@@ -237,7 +274,7 @@ def autopath(plan_list): #coordinate and radius needs to be mm, in form of [rp.C
         drivetrain_forward(plan_list[1][i]/159.59) #convert mm into turns'''
 
 #ring sorting function
-def ring_sorting(colour):
+def ring_sorting_auto(colour):
     while True:
         if optical.color() == Color.RED:
             add_color("RED")
@@ -259,6 +296,69 @@ def ring_sorting(colour):
                 while distance.object_distance() < 15.0:
                     wait(30, MSEC)
                 storage.pop(0)
+                
+def ring_sorting():
+    while True:
+        if team_position == "skill":
+            if controller_1.buttonR1.pressing():
+                intake.spin(FORWARD, 100, PERCENT)
+            elif controller_1.buttonR2.pressing():
+                intake.spin(REVERSE, 100, PERCENT)
+            else:
+                intake.stop()
+        else:
+            if controller_1.buttonR1.pressing(): # normal intake filter
+                intake.spin(FORWARD, 100, PERCENT)
+                if ring_sort_status == "RED":
+                    if distance.object_distance() < 15.0 and len(storage) > 0 and storage[0] == "RED":
+                        wait(80, MSEC)
+                        intake.set_velocity(100, PERCENT)
+                        intake.spin_for(REVERSE, 2, TURNS)
+                        while distance.object_distance() < 15.0:
+                            wait(30, MSEC)
+                        storage.pop(0)
+                elif ring_sort_status == "BLUE":
+                    if distance.object_distance() < 15.0 and len(storage) > 0 and storage[0] == "BLUE":
+                        wait(80, MSEC)
+                        intake.set_velocity(100, PERCENT)
+                        intake.spin_for(REVERSE, 2, TURNS)
+                        while distance.object_distance() < 15.0:
+                            wait(30, MSEC)
+                        storage.pop(0)
+            elif controller_1.buttonR2.pressing(): # wall goal intake filter
+                intake.spin(FORWARD, 100, PERCENT)
+                if ring_sort_status == "RED":
+                    if distance.object_distance() < 30.0 and len(storage) > 0 and storage[0] == "BLUE":
+                        intake.set_velocity(100, PERCENT)
+                        intake.spin_for(REVERSE, 6, TURNS)
+                        while distance.object_distance() < 15.0:
+                            wait(30, MSEC) 
+                        storage.pop(0)
+                    if distance.object_distance() < 15.0 and len(storage) > 0 and storage[0] == "RED":
+                        intake.set_velocity(100, PERCENT)
+                        wait(100, MSEC)
+                        intake.spin_for(REVERSE, 2, TURNS)
+                        while distance.object_distance() < 15.0:
+                            wait(30, MSEC)
+                        storage.pop(0)
+                elif ring_sort_status == "BLUE":
+                    if distance.object_distance() < 30.0 and len(storage) > 0 and storage[0] == "RED":
+                        intake.set_velocity(100, PERCENT)
+                        intake.spin_for(REVERSE, 6, TURNS)
+                        while distance.object_distance() < 15.0:
+                            wait(30, MSEC) 
+                        storage.pop(0)
+                    if distance.object_distance() < 15.0 and len(storage) > 0 and storage[0] == "BLUE":
+                        intake.set_velocity(100, PERCENT)
+                        wait(100, MSEC)
+                        intake.spin_for(REVERSE, 2, TURNS)
+                        while distance.object_distance() < 15.0:
+                            wait(30, MSEC)
+                        storage.pop(0)
+            elif controller_1.buttonB.pressing():
+                intake.spin(REVERSE, 100, PERCENT)     
+            else:
+                intake.stop()
 
 
 # Autonomous def
@@ -266,7 +366,7 @@ def autonomous(): #2 share goal side, 1 share ring side
     global ring_sort_status
     intake.set_velocity(100, PERCENT)
     if team_position == "red_1":
-        Thread(ring_sorting,("BLUE",))
+        Thread(ring_sorting_auto,("BLUE",))
         drivetrain_forward(2, 100)
         drivetrain.turn(LEFT, 43, PERCENT)
         wait(0.85, SECONDS)
@@ -305,10 +405,10 @@ def autonomous(): #2 share goal side, 1 share ring side
         drivetrain_forward(-2, 100)
 
     if team_position == "red_2":
-        pass
+        drivetrain_turn(3,100)
         
     if team_position == "blue_1":
-        Thread(ring_sorting,("RED",))
+        Thread(ring_sorting_auto,("RED",))
         drivetrain_forward(2.2, 100)
         drivetrain.turn(RIGHT, 43, PERCENT)
         wait(0.85, SECONDS)
@@ -347,7 +447,7 @@ def autonomous(): #2 share goal side, 1 share ring side
         drivetrain_forward(-2, 100)
              
     if team_position == "blue_2":
-        pass
+        drivetrain_forward(9, 100)
         
     if team_position == "skill":
         #mobile goal 1
@@ -466,6 +566,7 @@ def driver_control():
         intake.spin(FORWARD)
         wait(0.36, SECONDS)
         intake.stop()
+    Thread(ring_sorting)
     # Process every 20 milliseconds
     while True:
     # Status Update
@@ -529,66 +630,6 @@ def driver_control():
             add_color("BLUE")
             
     #intake filter control
-        if team_position == "skill":
-            if controller_1.buttonR1.pressing():
-                intake.spin(FORWARD, 100, PERCENT)
-            elif controller_1.buttonR2.pressing():
-                intake.spin(REVERSE, 100, PERCENT)
-            else:
-                intake.stop()
-        else:
-            if controller_1.buttonR1.pressing(): # normal intake filter
-                intake.spin(FORWARD, 100, PERCENT)
-                if ring_sort_status == "RED":
-                    if distance.object_distance() < 15.0 and storage[0] == "RED":
-                        wait(80, MSEC)
-                        intake.set_velocity(100, PERCENT)
-                        intake.spin_for(REVERSE, 2, TURNS)
-                        while distance.object_distance() < 15.0:
-                            wait(30, MSEC)
-                        storage.pop(0)
-                elif ring_sort_status == "BLUE":
-                    if distance.object_distance() < 15.0 and storage[0] == "BLUE":
-                        wait(80, MSEC)
-                        intake.set_velocity(100, PERCENT)
-                        intake.spin_for(REVERSE, 2, TURNS)
-                        while distance.object_distance() < 15.0:
-                            wait(30, MSEC)
-                        storage.pop(0)
-            elif controller_1.buttonR2.pressing(): # wall goal intake filter
-                intake.spin(FORWARD, 100, PERCENT)
-                if ring_sort_status == "RED":
-                    if distance.object_distance() < 30.0 and storage[0] == "BLUE":
-                        intake.set_velocity(100, PERCENT)
-                        intake.spin_for(REVERSE, 6, TURNS)
-                        while distance.object_distance() < 15.0:
-                            wait(30, MSEC) 
-                        storage.pop(0)
-                    if distance.object_distance() < 15.0 and storage[0] == "RED":
-                        intake.set_velocity(100, PERCENT)
-                        wait(100, MSEC)
-                        intake.spin_for(REVERSE, 2, TURNS)
-                        while distance.object_distance() < 15.0:
-                            wait(30, MSEC)
-                        storage.pop(0)
-                elif ring_sort_status == "BLUE":
-                    if distance.object_distance() < 30.0 and storage[0] == "RED":
-                        intake.set_velocity(100, PERCENT)
-                        intake.spin_for(REVERSE, 6, TURNS)
-                        while distance.object_distance() < 15.0:
-                            wait(30, MSEC) 
-                        storage.pop(0)
-                    if distance.object_distance() < 15.0 and storage[0] == "BLUE":
-                        intake.set_velocity(100, PERCENT)
-                        wait(100, MSEC)
-                        intake.spin_for(REVERSE, 2, TURNS)
-                        while distance.object_distance() < 15.0:
-                            wait(30, MSEC)
-                        storage.pop(0)
-            elif controller_1.buttonB.pressing():
-                intake.spin(REVERSE, 100, PERCENT)     
-            else:
-                intake.stop()
        
     # paddle control
         if controller_1.buttonL1.pressing():
@@ -627,13 +668,13 @@ def driver_control():
                 lift_status = "stop"
                 lift_stage = 2
                 lift.stop()'''
-        if lift_rotation.position(TURNS) < -0.2 and lift_status == "up":
+        if lift_rotation.position(TURNS) < 0.3 and lift_status == "up":
             lift.set_stopping(HOLD)
             lift_status = "stop"
             lift_stage = 1
             lift.stop()
         
-        if lift_rotation.position(TURNS) > 0.99 and lift_status == "down":
+        if lift_rotation.position(TURNS) > 1 and lift_status == "down":
             lift.stop()
             lift.set_stopping(COAST)
             lift_status = "stop"
