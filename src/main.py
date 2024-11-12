@@ -50,7 +50,7 @@ drivetrain = DriveTrain(left_drive_smart, right_drive_smart, 299.24 , 377.1, 304
 inertial = Inertial(Ports.PORT20)
 lift_rotation = Rotation(Ports.PORT16, False)
 odometry = Rotation(Ports.PORT18, False)
-odometry_turn = Rotation(Ports.PORT14, True)
+odometry_turn = Rotation(Ports.PORT14, False)
 optical = Optical(Ports.PORT17)
 distance = Distance(Ports.PORT15)
 lift_rotation.set_position(360, DEGREES)
@@ -190,8 +190,8 @@ def drivetrain_forward(target_turns: float, speed: int,  unit: str = "turns"):
     if unit == "mm":
         target_turns = target_turns / 159.59
     kp = 40
-    ki = 0.15
-    kd = 0.8
+    ki = 0.03
+    kd = 1
     previous_error = 0
     integral = 0
     drivetrain.drive(FORWARD)
@@ -209,7 +209,7 @@ def drivetrain_forward(target_turns: float, speed: int,  unit: str = "turns"):
         odometry_output = (speed/100)*max(min(odometry_output, 100), -100)
         drivetrain.set_drive_velocity(odometry_output, PERCENT)
         current_turns = odometry.position(TURNS)
-        if not (target_turns - 0.05 < current_turns - initial_turns < target_turns):
+        if not (target_turns - 0.5 < current_turns - initial_turns < target_turns+0.2):
             # Reset the timer if the condition is false
             false_condition_start_time = None
         else:
@@ -225,8 +225,8 @@ def drivetrain_forward(target_turns: float, speed: int,  unit: str = "turns"):
     drivetrain.stop()
 
 def drivetrain_turn(target_turns: float, speed: int,  unit: str = "turns"):
-    kp = 50
-    ki = 0.1
+    kp = 57
+    ki = 0.02
     kd = 25
     previous_error = 0
     integral = 0
@@ -245,7 +245,7 @@ def drivetrain_turn(target_turns: float, speed: int,  unit: str = "turns"):
         odometry_output = (speed/100)*max(min(odometry_output, 100), -100)
         drivetrain.set_turn_velocity(odometry_output, PERCENT)
         current_turns = odometry_turn.position(TURNS)
-        if not (target_turns - 0.05 < current_turns - initial_turns < target_turns):
+        if not (target_turns - 0.5 < current_turns - initial_turns < target_turns+0.2):
             # Reset the timer if the condition is false
             false_condition_start_time = None
         else:
@@ -307,7 +307,7 @@ def ring_sorting():
             else:
                 intake.stop()
         else:
-            if controller_1.buttonR1.pressing(): # normal intake filter
+            if controller_1.buttonR1.pressing() and not controller_1.buttonR2.pressing(): # normal intake filter
                 intake.spin(FORWARD, 12, VOLT)
                 if ring_sort_status == "RED":
                     if distance.object_distance() < 15.0 and len(storage) > 0 and storage[0] == "RED":
@@ -325,7 +325,7 @@ def ring_sorting():
                         while distance.object_distance() < 15.0:
                             wait(30, MSEC)
                         storage.pop(0)
-            elif controller_1.buttonR2.pressing(): # wall goal intake filter
+            elif controller_1.buttonR2.pressing() and not controller_1.buttonR1.pressing(): # wall goal intake filter
                 intake.spin(FORWARD, 12, VOLT)
                 if ring_sort_status == "RED":
                     if distance.object_distance() < 30.0 and len(storage) > 0 and storage[0] == "BLUE":
@@ -355,7 +355,7 @@ def ring_sorting():
                         while distance.object_distance() < 15.0:
                             wait(30, MSEC)
                         storage.pop(0)
-            elif controller_1.buttonB.pressing():
+            elif controller_1.buttonR1.pressing() and controller_1.buttonR2.pressing():
                 intake.spin(REVERSE, 12, VOLT)     
             else:
                 intake.stop()
@@ -405,7 +405,7 @@ def autonomous(): #2 share goal side, 1 share ring side
         drivetrain_forward(-2, 100)
 
     if team_position == "red_2":
-        drivetrain_turn(1.4,100)
+        drivetrain_forward(2,100)
         
     if team_position == "blue_1":
         Thread(ring_sorting_auto,("RED",))
@@ -456,23 +456,57 @@ def autonomous(): #2 share goal side, 1 share ring side
         wait(0.36, SECONDS)
         intake.stop()
         wait(0.2, SECONDS)
-        drivetrain_forward(1.9, 100)
-        drivetrain_turn(-1.3, 100)
-        drivetrain_forward(-3.45, 90)
+        drivetrain_forward(2.9, 100)
+        drivetrain_turn(-1.7, 100)
+        drivetrain_forward(-3.7, 80)
         clamp.set(True)
         intake.spin(FORWARD)
         drivetrain_turn(1.65, 100)
         drivetrain_forward(3.8, 100)
-        drivetrain_turn(1.75, 100)
-        drivetrain_forward(3.7, 100)
-        drivetrain_turn(1.9, 100)
-        drivetrain_forward(4.5, 100)
+        wait(0.5, SECONDS)
+        drivetrain_turn(1.6, 100)
+        drivetrain_forward(3.6, 100)
+        drivetrain_turn(1.5, 100)
+        drivetrain_forward(4.7, 90)
         drivetrain_forward(-3.5, 100)
         drivetrain_turn(-0.75, 100)
         drivetrain_forward(2, 100)
-        drivetrain_turn(-3, 100)
-        drivetrain_forward(-2.5, 100)
+        drivetrain_turn(-3.4, 100)
+        drivetrain.drive(REVERSE, 100, PERCENT)
+        wait(1, SECONDS)
         clamp.set(False)
+        drivetrain_forward(2.6, 100)
+        drivetrain_turn(2.5, 100)
+        intake.stop()
+        drivetrain.drive(FORWARD, 70, PERCENT)
+        wait(1, SECONDS)
+        drivetrain_forward(-13.5, 75)
+        intake.spin(FORWARD)
+        clamp.set(True)
+        drivetrain_turn(-1.8, 100)
+        drivetrain_forward(3.8, 100)
+        wait(0.5, SECONDS)
+        drivetrain_turn(-1.75, 100)
+        drivetrain_forward(3.5, 100)
+        drivetrain_turn(-1.8, 100)
+        drivetrain_forward(4.9, 80)
+        drivetrain_forward(-3.6, 100)
+        drivetrain_turn(0.6, 100)
+        drivetrain_forward(2.5, 90)
+        drivetrain_turn(3.3, 100)
+        drivetrain_forward(-3.2, 90)
+        clamp.set(False)
+        
+        drivetrain_forward(2, 90)
+        drivetrain_turn(-1.6, 100)
+        drivetrain.drive(FORWARD, 70, PERCENT)
+        wait(1, SECONDS)
+        drivetrain_forward(-2, 90)
+        drivetrain_turn(1.6, 100)
+        drivetrain.drive(REVERSE, 70, PERCENT)
+        wait(1, SECONDS)
+        
+        drivetrain_forward(3, 90)
         '''
         wait(1.2, SECONDS)
         drivetrain.turn(RIGHT, 95, PERCENT)
@@ -563,12 +597,12 @@ def driver_control():
         pto.set(pto_status)
     # Drive Train
         #arcade drive
-        ratio = 1.5 #bigger the number, less the sensitive
+        ratio = 1.35 #bigger the number, less the sensitive
         forward = 100*math.sin(((controller_1.axis3.position()**3)/636620))
         if controller_1.axis3.position() < 0:
-            forward = 0.6*forward
+            forward = 0.65*forward
         rotate_dynamic = (100/ratio)*math.sin((abs((forward**3))/636620))*math.sin(((controller_1.axis1.position()**3)/636620))
-        rotate_linear = 45*math.sin(((controller_1.axis1.position()**3)/636620))
+        rotate_linear = 40*math.sin(((controller_1.axis1.position()**3)/636620))
         rotate_linear_lift = 35*math.sin(((controller_1.axis1.position()**3)/636620))
         #total_rotate += rotate_dynamic#integral
         if -40 <= forward <= 40:
