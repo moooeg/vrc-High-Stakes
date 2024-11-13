@@ -186,9 +186,12 @@ def drivetrain_turn_right(target_angle: float):
     drivetrain.stop()'''
 
 # odometry def
-def drivetrain_forward(target_turns: float, speed: int,  unit: str = "turns"):
+def drivetrain_forward(target_turns: float, speed: int, time_out=0, unit: str = "turns"):
+    movement_start_time = brain.timer.time(MSEC)
     if unit == "mm":
         target_turns = target_turns / 159.59
+    if speed > 100:
+        speed = 100
     kp = 40
     ki = 0.03
     kd = 1
@@ -222,9 +225,14 @@ def drivetrain_forward(target_turns: float, speed: int,  unit: str = "turns"):
         # Break the loop if the condition has been false for more than 0.5 seconds
         if false_condition_duration >= 50:
             break
+        elif movement_start_time-brain.timer.time(MSEC) > time_out and time_out > 0:
+            break
     drivetrain.stop()
 
-def drivetrain_turn(target_turns: float, speed: int,  unit: str = "turns"):
+def drivetrain_turn(target_turns: float, speed: int, time_out = 0, unit: str = "turns"):
+    movement_start_time = brain.timer.time(MSEC)
+    if speed > 100:
+        speed = 100
     kp = 57
     ki = 0.02
     kd = 25
@@ -258,6 +266,8 @@ def drivetrain_turn(target_turns: float, speed: int,  unit: str = "turns"):
         # Break the loop if the condition has been false for more than 0.5 seconds
         if false_condition_duration >= 50:
             break
+        elif movement_start_time-brain.timer.time(MSEC) > time_out and time_out > 0:
+            break
     drivetrain.stop()
 
 
@@ -266,12 +276,6 @@ def add_color(new_color):
     if len(storage) >= 2:
         storage.pop(0)  # Remove the first color if the list is full
     storage.append(new_color)
-
-'''
-def autopath(plan_list): #coordinate and radius needs to be mm, in form of [rp.Coordinate(x, y)]
-    for i in range(len(plan_list[0])):
-        drivetrain_turn(plan_list[0][i])
-        drivetrain_forward(plan_list[1][i]/159.59) #convert mm into turns'''
 
 #ring sorting function
 def ring_sorting_auto(colour):
@@ -301,14 +305,14 @@ def ring_sorting():
     while True:
         if team_position == "skill":
             if controller_1.buttonR1.pressing():
-                intake.spin(FORWARD, 12, VOLT)
+                intake.spin(FORWARD, 100, PERCENT)
             elif controller_1.buttonR2.pressing():
-                intake.spin(REVERSE, 12, VOLT)
+                intake.spin(REVERSE, 100, PERCENT)
             else:
                 intake.stop()
         else:
             if controller_1.buttonR1.pressing() and not controller_1.buttonR2.pressing(): # normal intake filter
-                intake.spin(FORWARD, 12, VOLT)
+                intake.spin(FORWARD, 100, PERCENT)
                 if ring_sort_status == "RED":
                     if distance.object_distance() < 15.0 and len(storage) > 0 and storage[0] == "RED":
                         wait(80, MSEC)
@@ -326,7 +330,7 @@ def ring_sorting():
                             wait(30, MSEC)
                         storage.pop(0)
             elif controller_1.buttonR2.pressing() and not controller_1.buttonR1.pressing(): # wall goal intake filter
-                intake.spin(FORWARD, 12, VOLT)
+                intake.spin(FORWARD, 100, PERCENT)
                 if ring_sort_status == "RED":
                     if distance.object_distance() < 30.0 and len(storage) > 0 and storage[0] == "BLUE":
                         intake.set_velocity(100, PERCENT)
@@ -356,7 +360,7 @@ def ring_sorting():
                             wait(30, MSEC)
                         storage.pop(0)
             elif controller_1.buttonR1.pressing() and controller_1.buttonR2.pressing():
-                intake.spin(REVERSE, 12, VOLT)     
+                intake.spin(REVERSE, 100, PERCENT)     
             else:
                 intake.stop()
 
@@ -473,14 +477,14 @@ def autonomous(): #2 share goal side, 1 share ring side
         drivetrain_forward(2, 100)
         drivetrain_turn(-3.4, 100)
         drivetrain.drive(REVERSE, 100, PERCENT)
-        wait(1, SECONDS)
+        wait(2, SECONDS)
         clamp.set(False)
         drivetrain_forward(2.6, 100)
         drivetrain_turn(2.5, 100)
         intake.stop()
         drivetrain.drive(FORWARD, 70, PERCENT)
-        wait(1, SECONDS)
-        drivetrain_forward(-13.5, 75)
+        wait(0.8, SECONDS)
+        drivetrain_forward(-13.5, 80)
         intake.spin(FORWARD)
         clamp.set(True)
         drivetrain_turn(-1.8, 100)
@@ -488,25 +492,34 @@ def autonomous(): #2 share goal side, 1 share ring side
         wait(0.5, SECONDS)
         drivetrain_turn(-1.75, 100)
         drivetrain_forward(3.5, 100)
+        wait(0.5, SECONDS)
         drivetrain_turn(-1.8, 100)
         drivetrain_forward(4.9, 80)
         drivetrain_forward(-3.6, 100)
         drivetrain_turn(0.6, 100)
         drivetrain_forward(2.5, 90)
-        drivetrain_turn(3.3, 100)
-        drivetrain_forward(-3.2, 90)
-        clamp.set(False)
-        
-        drivetrain_forward(2, 90)
-        drivetrain_turn(-1.6, 100)
-        drivetrain.drive(FORWARD, 70, PERCENT)
+        wait(0.5, SECONDS)
+        drivetrain_turn(3.5, 100)
+        drivetrain.drive(REVERSE, 90, PERCENT)
         wait(1, SECONDS)
+        clamp.set(False)
+        intake.stop()
+        drivetrain_forward(2, 90)
+        drivetrain_turn(-2, 100)
+        drivetrain.drive(FORWARD, 100, PERCENT)
+        wait(0.8, SECONDS)
         drivetrain_forward(-2, 90)
         drivetrain_turn(1.6, 100)
-        drivetrain.drive(REVERSE, 70, PERCENT)
-        wait(1, SECONDS)
-        
-        drivetrain_forward(3, 90)
+        drivetrain.drive(REVERSE, 100, PERCENT)
+        wait(1.5, SECONDS)
+        drivetrain_forward(10.5, 100)
+        drivetrain_turn(0.6, 100)
+        intake.spin(FORWARD)
+        drivetrain_forward(5, 100)
+        while not distance.object_distance() < 30.0:
+            wait(50, MSEC)
+        intake.stop()
+        drivetrain_turn(3.5, 100)
         '''
         wait(1.2, SECONDS)
         drivetrain.turn(RIGHT, 95, PERCENT)
