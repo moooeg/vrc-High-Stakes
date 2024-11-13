@@ -54,6 +54,7 @@ odometry_turn = Rotation(Ports.PORT14, False)
 optical = Optical(Ports.PORT17)
 distance = Distance(Ports.PORT15)
 lift_rotation.set_position(360, DEGREES)
+distance = Distance(Ports.PORT13)
 
 pto = DigitalOut(brain.three_wire_port.f)
 clamp = DigitalOut(brain.three_wire_port.b)
@@ -270,13 +271,30 @@ def drivetrain_turn(target_turns: float, speed: int, time_out = 0, unit: str = "
             break
     drivetrain.stop()
 
-
 # ring holding list def
 def add_color(new_color):
     if len(storage) >= 2:
         storage.pop(0)  # Remove the first color if the list is full
     storage.append(new_color)
 
+def goal_clamp():
+    global clamp_status
+    while True:
+        if clamp_status == False and distance.object_distance() < 17:
+            clamp_status = True
+            clamp.set(clamp_status)
+            while distance.object_distance() < 20:
+                wait(50, MSEC)
+        else:
+            if controller_1.buttonL2.pressing():
+                clamp_status = not clamp_status
+                clamp.set(clamp_status)
+                while controller_1.buttonL2.pressing():
+                    wait(30, MSEC)
+            
+            indicator.set(not clamp_status)
+            
+                
 #ring sorting function
 def ring_sorting_auto(colour):
     while True:
@@ -451,8 +469,9 @@ def autonomous(): #2 share goal side, 1 share ring side
         drivetrain_forward(-2, 100)
              
     if team_position == "blue_2":
-        Thread(drivetrain_turn,(1.4, 10))
-        drivetrain_forward(10, 100)
+        while True:
+            if distance.object_distance() < 17:
+                clamp.set(True)
         
     if team_position == "skill":
         #mobile goal 1
@@ -515,11 +534,13 @@ def autonomous(): #2 share goal side, 1 share ring side
         drivetrain_forward(10.5, 100)
         drivetrain_turn(0.6, 100)
         intake.spin(FORWARD)
-        drivetrain_forward(5, 100)
-        while not distance.object_distance() < 30.0:
-            wait(50, MSEC)
+        drivetrain_forward(6, 100)
+        while not distance.object_distance() < 50.0:
+            wait(5, MSEC)
         intake.stop()
-        drivetrain_turn(3.5, 100)
+        drivetrain_turn(3.7, 100)
+        drivetrain_forward(-5, 100)
+        clamp.set(True)
         '''
         wait(1.2, SECONDS)
         drivetrain.turn(RIGHT, 95, PERCENT)
@@ -604,6 +625,7 @@ def driver_control():
         wait(0.36, SECONDS)
         intake.stop()
     Thread(ring_sorting)
+    Thread(goal_clamp)
     # Process every 20 milliseconds
     while True:
     # Status Update
@@ -675,12 +697,7 @@ def driver_control():
             paddle.set(False)
             
         # goal clamp control
-        if controller_1.buttonL2.pressing():
-            clamp_status = not clamp_status
-            clamp.set(clamp_status)
-            indicator.set(not clamp_status)
-            while controller_1.buttonL2.pressing():
-                wait(30, MSEC)
+        
                 
     # lift contol
         if controller_1.axis2.position() > 95 and lift_stage == 0:
