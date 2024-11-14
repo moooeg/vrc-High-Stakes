@@ -163,19 +163,30 @@ def team_choosing():
                 wait(5, MSEC)
         wait(5, MSEC)
 
-'''# PID turn def
-def drivetrain_turn_right(target_angle: float):
+# PID turn def
+def inertial_turnto(target_angle: float):
     #change kp, ki, kd, accoding to the robot
     kp = 0.4
-    ki = 0.25
-    kd = 0.2
+    ki = 0
+    kd = 0
     previous_error = 0
     integral = 0
-    inertial.set_heading(1, DEGREES)
-    drivetrain.turn(RIGHT)
+    false_condition_start_time = None
+    false_condition_duration = 0
     current_angle = inertial.heading(DEGREES)
-    while not (target_angle - 0.5 < current_angle < target_angle + 0.5):
-        error = target_angle - current_angle
+    right_off = (target_angle-current_angle+360)%360
+    left_off = 360-right_off
+    if right_off < left_off:
+        drivetrain.turn(RIGHT) 
+    else:
+        drivetrain.turn(LEFT)
+    while True:
+        right_off = (target_angle - current_angle+360)%360
+        left_off = 360-right_off
+        if right_off > left_off:
+            error = left_off
+        else:
+            error = - right_off
         integral += error
         integral = max(min(integral, 30), -30)
         derivative = error - previous_error
@@ -184,7 +195,19 @@ def drivetrain_turn_right(target_angle: float):
         pid_output = max(min(pid_output, 100), -100)
         drivetrain.set_turn_velocity(pid_output, PERCENT)
         current_angle = inertial.heading(DEGREES)
-    drivetrain.stop()'''
+        if not (target_angle - 0.3 < current_angle < target_angle+0.3):
+            # Reset the timer if the condition is false
+            false_condition_start_time = None
+        else:
+            # Start tracking time if the condition has just become false
+            if false_condition_start_time is None:
+                false_condition_start_time = brain.timer.time(MSEC)
+            else:
+                false_condition_duration = brain.timer.time(MSEC) - false_condition_start_time
+        # Break the loop if the condition has been false for more than 0.5 seconds
+        if false_condition_duration >= 50:
+            break
+    drivetrain.stop()
 
 # odometry def
 def drivetrain_forward(target_turns: float, speed: int, time_out=0, unit: str = "turns"):
@@ -293,8 +316,7 @@ def goal_clamp():
                     wait(30, MSEC)
             
             indicator.set(not clamp_status)
-            
-                
+             
 #ring sorting function
 def ring_sorting_auto(colour):
     while True:
@@ -382,7 +404,6 @@ def ring_sorting():
             else:
                 intake.stop()
 
-
 # Autonomous def
 def autonomous(): #2 share goal side, 1 share ring side
     global ring_sort_status
@@ -427,7 +448,14 @@ def autonomous(): #2 share goal side, 1 share ring side
         drivetrain_forward(-2, 100)
 
     if team_position == "red_2":
-        drivetrain_forward(2,100)
+        inertial_turnto(90)
+        wait(1)
+        inertial_turnto(270)
+        wait(1)
+        inertial_turnto(135)
+        wait(1)
+        inertial_turnto(180)
+        wait(1)
         
     if team_position == "blue_1":
         Thread(ring_sorting_auto,("RED",))
@@ -469,12 +497,11 @@ def autonomous(): #2 share goal side, 1 share ring side
         drivetrain_forward(-2, 100)
              
     if team_position == "blue_2":
-        while True:
-            if distance.object_distance() < 17:
-                clamp.set(True)
+        pass
         
     if team_position == "skill":
         #mobile goal 1
+        '''
         intake.spin(FORWARD)
         wait(0.36, SECONDS)
         intake.stop()
@@ -490,19 +517,20 @@ def autonomous(): #2 share goal side, 1 share ring side
         drivetrain_turn(1.6, 100)
         drivetrain_forward(3.6, 100)
         drivetrain_turn(1.5, 100)
-        drivetrain_forward(4.7, 90)
+        drivetrain_forward(4.7, 80)
         drivetrain_forward(-3.5, 100)
         drivetrain_turn(-0.75, 100)
         drivetrain_forward(2, 100)
         drivetrain_turn(-3.4, 100)
         drivetrain.drive(REVERSE, 100, PERCENT)
-        wait(2, SECONDS)
+        wait(1.8, SECONDS)
         clamp.set(False)
         drivetrain_forward(2.6, 100)
         drivetrain_turn(2.5, 100)
         intake.stop()
         drivetrain.drive(FORWARD, 70, PERCENT)
         wait(0.8, SECONDS)
+        #mobile goal 2
         drivetrain_forward(-13.5, 80)
         intake.spin(FORWARD)
         clamp.set(True)
@@ -524,89 +552,28 @@ def autonomous(): #2 share goal side, 1 share ring side
         clamp.set(False)
         intake.stop()
         drivetrain_forward(2, 90)
+        #line up on both wall
         drivetrain_turn(-2, 100)
+        '''
         drivetrain.drive(FORWARD, 100, PERCENT)
         wait(0.8, SECONDS)
         drivetrain_forward(-2, 90)
         drivetrain_turn(1.6, 100)
         drivetrain.drive(REVERSE, 100, PERCENT)
-        wait(1.5, SECONDS)
+        wait(1.2, SECONDS)
+        #third goal
         drivetrain_forward(10.5, 100)
         drivetrain_turn(0.6, 100)
         intake.spin(FORWARD)
-        drivetrain_forward(6, 100)
-        while not distance.object_distance() < 50.0:
-            wait(5, MSEC)
+        drivetrain_forward(6.5, 100)
         intake.stop()
-        drivetrain_turn(3.7, 100)
-        drivetrain_forward(-5, 100)
+        drivetrain_turn(-3.2, 100)
+        drivetrain_forward(-5, 80)
         clamp.set(True)
-        '''
-        wait(1.2, SECONDS)
-        drivetrain.turn(RIGHT, 95, PERCENT)
-        wait(0.70, SECONDS)
-        drivetrain.stop()
-        wait(0.3, SECONDS)
-        clamp.set(False)
-        drivetrain.drive(REVERSE, 70, PERCENT)
-        wait(2, SECONDS)
-        drivetrain_forward(2, 100)
-        drivetrain.turn(RIGHT, 100, PERCENT)
-        wait(0.4, SECONDS)
-        drivetrain.stop()
-        intake.stop()
-        wait(0.5, SECONDS)
-        drivetrain.drive(FORWARD, 70, PERCENT)
-        wait(1, SECONDS)
-        drivetrain.stop()
-        drivetrain.drive(REVERSE, 100, PERCENT)
-        wait(2.1, SECONDS)
-        drivetrain.drive(REVERSE, 30, PERCENT)
-        wait(1.3, SECONDS)
-        drivetrain.stop()
-        #mobile goal 2
-        clamp.set(True)
-        drivetrain.turn(LEFT, 94, PERCENT)
-        wait(0.35, SECONDS)
-        drivetrain.stop()
         intake.spin(FORWARD)
-        wait(0.3, SECONDS)
-        drivetrain_forward(3.8, 100)
-        drivetrain.turn(LEFT, 93, PERCENT)
-        wait(0.35, SECONDS)
-        drivetrain.stop()
-        wait(0.3, SECONDS)
-        drivetrain_forward(3.7, 100)
-        drivetrain.turn(LEFT, 90, PERCENT)
-        wait(0.37, SECONDS)
-        drivetrain.stop()
-        wait(0.3, SECONDS)
-        drivetrain_forward(4.5, 30)
-        drivetrain_forward(-3, 80)
-        drivetrain.turn(RIGHT, 95, PERCENT)
-        wait(0.23, SECONDS)
-        drivetrain.stop()
-        wait(0.3, SECONDS)
-        drivetrain_forward(2.3, 100)
-        wait(1.2, SECONDS)
-        drivetrain.turn(LEFT, 95, PERCENT)
-        wait(0.70, SECONDS)
-        drivetrain.stop()
-        wait(0.3, SECONDS)
-        clamp.set(False)
-        drivetrain.drive(REVERSE, 70, PERCENT)
-        wait(1.5, SECONDS)
-        #elevation
-        elevation.set(True)
-        drivetrain.drive(FORWARD, 100, PERCENT)
-        time_out = 0
-        while inertial.orientation(OrientationType.PITCH, DEGREES) < 16:
-            wait(0.5, SECONDS)
-        drivetrain.drive(REVERSE, 50, PERCENT)
-        wait(0.1, SECONDS)
-        drivetrain.stop()
-        intake.stop()
-        '''
+        drivetrain_turn(0.2, 100)
+        drivetrain_forward(9, 100)
+
 #  Driver Control def
 def driver_control():
     global left_drive_smart_stopped, right_drive_smart_stopped, pto_status, clamp_status, lift_status, lift_stage, ring_sort_status, elevation_status, ring_sort_status, storage
@@ -688,17 +655,12 @@ def driver_control():
         if 160.0 < optical.hue() < 250.0: # type: ignore
             add_color("BLUE")
             
-    #intake filter control
-       
     # paddle control
         if controller_1.buttonL1.pressing():
             paddle.set(True)
         else:
             paddle.set(False)
             
-        # goal clamp control
-        
-                
     # lift contol
         if controller_1.axis2.position() > 95 and lift_stage == 0:
             lift_status = "up"
