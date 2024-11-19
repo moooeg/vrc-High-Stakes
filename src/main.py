@@ -54,7 +54,7 @@ odometry_turn = Rotation(Ports.PORT14, False)
 optical = Optical(Ports.PORT17)
 distance = Distance(Ports.PORT15)
 lift_rotation.set_position(360, DEGREES)
-distance = Distance(Ports.PORT13)
+clamp_distance = Distance(Ports.PORT13)
 
 pto = DigitalOut(brain.three_wire_port.f)
 clamp = DigitalOut(brain.three_wire_port.b)
@@ -303,7 +303,7 @@ def add_color(new_color):
 def goal_clamp():
     global clamp_status
     while True:
-        if clamp_status == False and distance.object_distance() < 17:
+        if clamp_status == False and clamp_distance.object_distance() < 17:
             clamp_status = True
             clamp.set(clamp_status)
             while distance.object_distance() < 20:
@@ -380,7 +380,7 @@ def ring_sorting():
                         storage.pop(0)
                     if distance.object_distance() < 15.0 and len(storage) > 0 and storage[0] == "RED":
                         intake.set_velocity(100, PERCENT)
-                        wait(100, MSEC)
+                        wait(80, MSEC)
                         intake.spin_for(REVERSE, 2, TURNS)
                         while distance.object_distance() < 15.0:
                             wait(30, MSEC)
@@ -394,7 +394,7 @@ def ring_sorting():
                         storage.pop(0)
                     if distance.object_distance() < 15.0 and len(storage) > 0 and storage[0] == "BLUE":
                         intake.set_velocity(100, PERCENT)
-                        wait(100, MSEC)
+                        wait(80, MSEC)
                         intake.spin_for(REVERSE, 2, TURNS)
                         while distance.object_distance() < 15.0:
                             wait(30, MSEC)
