@@ -306,7 +306,7 @@ def goal_clamp():
         if clamp_status == False and clamp_distance.object_distance() < 17:
             clamp_status = True
             clamp.set(clamp_status)
-            while distance.object_distance() < 20:
+            while distance.object_distance() < 25:
                 wait(50, MSEC)
         else:
             if controller_1.buttonL2.pressing():
@@ -314,7 +314,6 @@ def goal_clamp():
                 clamp.set(clamp_status)
                 while controller_1.buttonL2.pressing():
                     wait(30, MSEC)
-            
             indicator.set(not clamp_status)
              
 #ring sorting function
@@ -423,26 +422,48 @@ def autonomous(): #2 share goal side, 1 share ring side
         clamp.set(True)
         drivetrain_turn(3.4, 100)
         intake.spin(FORWARD)
-        drivetrain_forward(2.7, 70)
+        drivetrain_forward(2.7, 100)
         wait(0.5, SECONDS)
         drivetrain_forward(-2.5, 100)
         drivetrain_turn(-0.85, 100)
         drivetrain_forward(1.8, 100)
         wait(0.8, SECONDS)
         drivetrain_turn(0.75, 100)
-        drivetrain_forward(2.7, 70)
+        drivetrain_forward(2.7, 100)
         wait(0.5, SECONDS)
         drivetrain_forward(-2.2, 100)
 
     if team_position == "red_2":
-        inertial_turnto(90)
-        wait(1)
-        inertial_turnto(270)
-        wait(1)
-        inertial_turnto(135)
-        wait(1)
-        inertial_turnto(180)
-        wait(1)
+        drivetrain_forward(6.6, 100)
+        drivetrain_turn(-0.75, 100)
+        intake.spin(FORWARD)
+        pto.set(True)
+        lift.spin(REVERSE, 100, PERCENT)
+        while lift_rotation.position(TURNS) > 0.5:
+            wait(50, MSEC)
+        lift.set_stopping(HOLD)
+        lift.stop()
+        drivetrain_forward(0.65, 80)
+        lift.spin(FORWARD, 100, PERCENT)
+        while lift_rotation.position(TURNS) < 1:
+            wait(50, MSEC)
+        lift.set_stopping(COAST)
+        lift.stop()
+        pto.set(False)
+        drivetrain_forward(-0.8, 100)
+        intake.stop()
+        drivetrain_turn(-1.75, 80)
+        intake.spin(FORWARD)
+        drivetrain_forward(2.2, 80)
+        wait(0.5, SECONDS)
+        intake.stop()
+        drivetrain_turn(-2.4, 80)
+        drivetrain_forward(-4.8, 70)
+        clamp.set(True)
+        intake.spin(FORWARD)
+        drivetrain_turn(-1.75, 80)
+        drivetrain.drive_for(FORWARD, 50, MM, 50, PERCENT)
+        
         
     if team_position == "blue_1":
         Thread(ring_sorting_auto,("RED",))
@@ -577,8 +598,6 @@ def driver_control():
     drivetrain.set_stopping(COAST)
     lift_status = 0
     integral_rotate = 0
-    #total_rotate = 0 integral
-    #ki = -0.5#integral
     brain.timer.clear()
     intake.set_velocity(100, PERCENT)
     if team_position == "red_1" or team_position == "red_2":
