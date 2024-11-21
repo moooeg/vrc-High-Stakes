@@ -434,6 +434,7 @@ def autonomous(): #2 share goal side, 1 share ring side
         drivetrain_forward(-2.2, 100)
 
     if team_position == "red_2":
+        Thread(ring_sorting_auto,("BLUE",))
         drivetrain_forward(6.6, 100)
         drivetrain_turn(-0.75, 100)
         intake.spin(FORWARD)
@@ -463,7 +464,6 @@ def autonomous(): #2 share goal side, 1 share ring side
         drivetrain_turn(-1.75, 80)
         drivetrain.drive_for(FORWARD, 600, MM, 50, PERCENT)
         
-        
     if team_position == "blue_1":
         Thread(ring_sorting_auto,("RED",))
         drivetrain_forward(2.82, 100)
@@ -491,6 +491,7 @@ def autonomous(): #2 share goal side, 1 share ring side
         drivetrain_forward(-2.2, 100)
              
     if team_position == "blue_2":
+        Thread(ring_sorting_auto,("RED",))
         drivetrain_forward(6.6, 100)
         drivetrain_turn(0.75, 100)
         intake.spin(FORWARD)
@@ -621,8 +622,6 @@ def autonomous(): #2 share goal side, 1 share ring side
             wait(50, MSEC)
         drivetrain.stop()
         
-
-
 #  Driver Control def
 def driver_control():
     global left_drive_smart_stopped, right_drive_smart_stopped, pto_status, clamp_status, lift_status, lift_stage, ring_sort_status, elevation_status, ring_sort_status, storage

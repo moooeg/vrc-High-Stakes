@@ -1,16 +1,16 @@
 {
 	"extension": {
-		"version": "0.5.0",
+		"version": "0.6.1",
 		"json": 2
 	},
 	"project": {
 		"name": "vrc-2024-2025",
 		"description": "",
-		"creationDate": "4/3/2024, 11:19:11 AM",
+		"creationDate": "Mon, 4 Mar 2024 01:42:48 GMT",
 		"platform": "V5",
 		"language": "python",
 		"slot": 1,
-		"sdkVersion": "V5_1_0_1_19",
+		"sdkVersion": "V5_1_0_1_25",
 		"python": {
 			"main": "src/main.py"
 		}
