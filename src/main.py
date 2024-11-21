@@ -210,7 +210,7 @@ def inertial_turnto(target_angle: float):
     drivetrain.stop()
 
 # odometry def
-def drivetrain_forward(target_turns: float, speed: int, time_out=0, unit: str = "turns"):
+def drivetrain_forward(target_turns: float, speed=100, time_out=0, unit: str = "turns"):
     movement_start_time = brain.timer.time(MSEC)
     if unit == "mm":
         target_turns = target_turns / 159.59
@@ -253,7 +253,7 @@ def drivetrain_forward(target_turns: float, speed: int, time_out=0, unit: str = 
             break
     drivetrain.stop()
 
-def drivetrain_turn(target_turns: float, speed: int, time_out = 0, unit: str = "turns"):
+def drivetrain_turn(target_turns: float, speed=100, time_out = 0, unit: str = "turns"):
     movement_start_time = brain.timer.time(MSEC)
     if speed > 100:
         speed = 100
@@ -405,7 +405,7 @@ def ring_sorting():
 
 # Autonomous def
 def autonomous(): #2 share goal side, 1 share ring side
-    global ring_sort_status
+    global ring_sort_status, clamp_status
     intake.set_velocity(100, PERCENT)
     if team_position == "red_1":
         Thread(ring_sorting_auto,("BLUE",))
@@ -466,34 +466,34 @@ def autonomous(): #2 share goal side, 1 share ring side
         
     if team_position == "blue_1":
         Thread(ring_sorting_auto,("RED",))
-        drivetrain_forward(2.82, 100)
-        drivetrain_turn(1.75, 100)
-        drivetrain_forward(-1.1, 100)
+        drivetrain_forward(2.79, 100)
+        drivetrain_turn(1.68, 100)
+        drivetrain_forward(-1.2, 100)
         intake.spin(FORWARD)
         wait(0.4, SECONDS)
         intake.stop()
         wait(0.2, SECONDS)
-        drivetrain_forward(1, 100)
-        drivetrain_turn(-2.83, 100)
-        drivetrain_forward(-6.5, 80)
+        drivetrain_forward(1.2, 100)
+        drivetrain_turn(-2.7, 100)
+        drivetrain_forward(-6.5, 75)
         clamp.set(True)
-        drivetrain_turn(-3.4, 100)
+        drivetrain_turn(-3.35, 100)
         intake.spin(FORWARD)
-        drivetrain_forward(2.7, 100)
+        drivetrain_forward(2.5, 100)
         wait(0.5, SECONDS)
         drivetrain_forward(-2.5, 100)
         drivetrain_turn(0.85, 100)
         drivetrain_forward(1.8, 100)
         wait(0.8, SECONDS)
-        drivetrain_turn(-0.75, 100)
-        drivetrain_forward(2.7, 100)
+        drivetrain_turn(-0.95, 100)
+        drivetrain_forward(2.35, 100)
         wait(0.5, SECONDS)
-        drivetrain_forward(-2.2, 100)
+        drivetrain_forward(-1, 100)
              
     if team_position == "blue_2":
         Thread(ring_sorting_auto,("RED",))
         drivetrain_forward(6.6, 100)
-        drivetrain_turn(0.75, 100)
+        drivetrain_turn(0.7, 100)
         intake.spin(FORWARD)
         pto.set(True)
         lift.spin(REVERSE, 100, PERCENT)
@@ -501,7 +501,7 @@ def autonomous(): #2 share goal side, 1 share ring side
             wait(50, MSEC)
         lift.set_stopping(HOLD)
         lift.stop()
-        drivetrain_forward(0.65, 80)
+        drivetrain_forward(0.7, 80)
         lift.spin(FORWARD, 100, PERCENT)
         while lift_rotation.position(TURNS) < 1:
             wait(50, MSEC)
@@ -510,17 +510,16 @@ def autonomous(): #2 share goal side, 1 share ring side
         pto.set(False)
         drivetrain_forward(-0.8, 100)
         intake.stop()
-        drivetrain_turn(1.75, 80)
+        drivetrain_turn(1.8, 80)
         intake.spin(FORWARD)
         drivetrain_forward(2.2, 80)
-        wait(0.5, SECONDS)
         intake.stop()
-        drivetrain_turn(2.4, 80)
+        drivetrain_turn(2.55, 80)
         drivetrain_forward(-4.8, 70)
         clamp.set(True)
         intake.spin(FORWARD)
         drivetrain_turn(1.75, 80)
-        drivetrain.drive_for(FORWARD, 50, MM, 50, PERCENT)
+        drivetrain.drive_for(FORWARD, 500, MM, 50, PERCENT)
         
     if team_position == "skill":
         Thread(goal_clamp)
