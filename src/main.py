@@ -443,8 +443,8 @@ def autonomous(): #2 share goal side, 1 share ring side
             wait(50, MSEC)
         lift.set_stopping(HOLD)
         lift.stop()
-        drivetrain_forward(0.65, 80)
-        lift.spin(FORWARD, 100, PERCENT)
+        drivetrain_forward(0.65, 100)
+        lift.spin(FORWARD, 80, PERCENT)
         while lift_rotation.position(TURNS) < 1:
             wait(50, MSEC)
         lift.set_stopping(COAST)
@@ -455,46 +455,74 @@ def autonomous(): #2 share goal side, 1 share ring side
         drivetrain_turn(-1.75, 80)
         intake.spin(FORWARD)
         drivetrain_forward(2.2, 80)
-        wait(0.5, SECONDS)
         intake.stop()
         drivetrain_turn(-2.4, 80)
         drivetrain_forward(-4.8, 70)
         clamp.set(True)
         intake.spin(FORWARD)
         drivetrain_turn(-1.75, 80)
-        drivetrain.drive_for(FORWARD, 50, MM, 50, PERCENT)
+        drivetrain.drive_for(FORWARD, 600, MM, 50, PERCENT)
         
         
     if team_position == "blue_1":
         Thread(ring_sorting_auto,("RED",))
-        drivetrain_forward(2.84, 100)
+        drivetrain_forward(2.82, 100)
         drivetrain_turn(1.75, 100)
-        drivetrain_forward(-1.2, 100)
+        drivetrain_forward(-1.1, 100)
         intake.spin(FORWARD)
         wait(0.4, SECONDS)
         intake.stop()
         wait(0.2, SECONDS)
         drivetrain_forward(1, 100)
-        drivetrain_turn(-2.78, 100)
+        drivetrain_turn(-2.83, 100)
         drivetrain_forward(-6.5, 80)
         clamp.set(True)
         drivetrain_turn(-3.4, 100)
         intake.spin(FORWARD)
-        drivetrain_forward(2.7, 70)
+        drivetrain_forward(2.7, 100)
         wait(0.5, SECONDS)
         drivetrain_forward(-2.5, 100)
         drivetrain_turn(0.85, 100)
         drivetrain_forward(1.8, 100)
         wait(0.8, SECONDS)
-        drivetrain_turn(-0.85, 100)
-        drivetrain_forward(2.7, 70)
+        drivetrain_turn(-0.75, 100)
+        drivetrain_forward(2.7, 100)
         wait(0.5, SECONDS)
         drivetrain_forward(-2.2, 100)
              
     if team_position == "blue_2":
-        pass
+        drivetrain_forward(6.6, 100)
+        drivetrain_turn(0.75, 100)
+        intake.spin(FORWARD)
+        pto.set(True)
+        lift.spin(REVERSE, 100, PERCENT)
+        while lift_rotation.position(TURNS) > 0.5:
+            wait(50, MSEC)
+        lift.set_stopping(HOLD)
+        lift.stop()
+        drivetrain_forward(0.65, 80)
+        lift.spin(FORWARD, 100, PERCENT)
+        while lift_rotation.position(TURNS) < 1:
+            wait(50, MSEC)
+        lift.set_stopping(COAST)
+        lift.stop()
+        pto.set(False)
+        drivetrain_forward(-0.8, 100)
+        intake.stop()
+        drivetrain_turn(1.75, 80)
+        intake.spin(FORWARD)
+        drivetrain_forward(2.2, 80)
+        wait(0.5, SECONDS)
+        intake.stop()
+        drivetrain_turn(2.4, 80)
+        drivetrain_forward(-4.8, 70)
+        clamp.set(True)
+        intake.spin(FORWARD)
+        drivetrain_turn(1.75, 80)
+        drivetrain.drive_for(FORWARD, 50, MM, 50, PERCENT)
         
     if team_position == "skill":
+        Thread(goal_clamp)
         pto.set(True)#disengage pto to reduce fricition
         #mobile goal 1
         intake.spin(FORWARD)
@@ -510,7 +538,7 @@ def autonomous(): #2 share goal side, 1 share ring side
         drivetrain_forward(3.8, 100)
         wait(0.5, SECONDS)
         drivetrain_turn(1.7, 100)
-        drivetrain_forward(3.5, 100)
+        drivetrain_forward(3.6, 100)
         wait(0.5, SECONDS)
         drivetrain_turn(1.7, 100)
         drivetrain_forward(4.6, 80)
@@ -519,8 +547,9 @@ def autonomous(): #2 share goal side, 1 share ring side
         drivetrain_forward(2.4, 100)
         drivetrain_turn(-3.2, 100)
         drivetrain.drive(REVERSE, 100, PERCENT)
-        wait(2, SECONDS)
-        clamp.set(False)
+        wait(1.5, SECONDS)
+        clamp_status = False
+        clamp.set(clamp_status)
         drivetrain_forward(2.4, 100)
         drivetrain_turn(2.5, 100)
         intake.stop()
@@ -545,7 +574,8 @@ def autonomous(): #2 share goal side, 1 share ring side
         drivetrain_turn(3.3, 100)
         drivetrain.drive(REVERSE, 90, PERCENT)
         wait(1, SECONDS)
-        clamp.set(False)
+        clamp_status = False
+        clamp.set(clamp_status)
         intake.stop()
         drivetrain_forward(2, 90)
         #line up on both wall
@@ -563,13 +593,13 @@ def autonomous(): #2 share goal side, 1 share ring side
         drivetrain_forward(6.5, 100)
         intake.stop()
         drivetrain_turn(-3.2, 100)
-        drivetrain_forward(-4.5, 75)
+        drivetrain_forward(-4.5, 65)
         clamp.set(True)
         intake.spin(FORWARD)
         drivetrain_turn(0.3, 100)
         drivetrain_forward(9, 100)
         wait(0.5, SECONDS)
-        drivetrain_turn(2.4, 100)
+        drivetrain_turn(2.4, 90)
         drivetrain_forward(2, 100)
         wait(0.3, SECONDS)
         drivetrain_forward(-2, 100)
@@ -582,7 +612,8 @@ def autonomous(): #2 share goal side, 1 share ring side
         intake.stop()
         drivetrain.drive(REVERSE, 100, PERCENT)
         wait(0.8, SECONDS)
-        clamp.set(False)
+        clamp_status = False
+        clamp.set(clamp_status)
         paddle.set(False)
         elevation.set(True)
         drivetrain.drive(FORWARD, 100, PERCENT)
@@ -615,8 +646,8 @@ def driver_control():
     # Status Update
         pto.set(pto_status)
     # Drive Train(integral)
-        ratio = 1.35  # Bigger the number, less sensitive
-        integral_decay_rate = 0.00001  # Rate at which integral decays
+        ratio = 1.3  # Bigger the number, less sensitive
+        integral_decay_rate = 0.000005  # Rate at which integral decays
         forward = 100 * math.sin(((controller_1.axis3.position()**3) / 636620))
         if controller_1.axis3.position() < 0:
             forward = 0.65 * forward
