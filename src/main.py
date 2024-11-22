@@ -306,14 +306,17 @@ def goal_clamp():
         if clamp_status == False and clamp_distance.object_distance() < 17:
             clamp_status = True
             clamp.set(clamp_status)
-            while distance.object_distance() < 25:
+            while distance.object_distance() < 35:
                 wait(50, MSEC)
+        elif clamp_status == True and clamp_distance.object_distance() > 35:
+            clamp_status = False
+            clamp.set(clamp_status)
         else:
             if controller_1.buttonL2.pressing():
                 clamp_status = not clamp_status
                 clamp.set(clamp_status)
                 while controller_1.buttonL2.pressing():
-                    wait(30, MSEC)
+                    wait(500, MSEC)
             indicator.set(not clamp_status)
              
 #ring sorting function
@@ -548,9 +551,9 @@ def autonomous(): #2 share goal side, 1 share ring side
         drivetrain_turn(-3.2, 100)
         drivetrain.drive(REVERSE, 100, PERCENT)
         wait(1.5, SECONDS)
-        clamp_status = False
-        clamp.set(clamp_status)
+        clamp.set(False)
         drivetrain_forward(2.4, 100)
+        clamp_status = False
         drivetrain_turn(2.5, 100)
         intake.stop()
         drivetrain.drive(FORWARD, 70, PERCENT)
@@ -574,10 +577,10 @@ def autonomous(): #2 share goal side, 1 share ring side
         drivetrain_turn(3.3, 100)
         drivetrain.drive(REVERSE, 90, PERCENT)
         wait(1, SECONDS)
-        clamp_status = False
-        clamp.set(clamp_status)
+        clamp.set(False)
         intake.stop()
         drivetrain_forward(2, 90)
+        clamp_status = False
         #line up on both wall
         drivetrain_turn(-2, 100)
         drivetrain.drive(FORWARD, 100, PERCENT)
@@ -605,15 +608,15 @@ def autonomous(): #2 share goal side, 1 share ring side
         drivetrain_forward(-2, 100)
         drivetrain_turn(-0.5, 100)
         paddle.set(True)
-        drivetrain_forward(3, 100)
+        drivetrain_forward(3.3, 100)
+        wait(1, SECONDS)
         drivetrain.drive(FORWARD, 100, PERCENT)
         wait(0.5, SECONDS)
         drivetrain_turn(3, 100)
         intake.stop()
         drivetrain.drive(REVERSE, 100, PERCENT)
         wait(0.8, SECONDS)
-        clamp_status = False
-        clamp.set(clamp_status)
+        clamp.set(False)
         paddle.set(False)
         elevation.set(True)
         drivetrain.drive(FORWARD, 100, PERCENT)
@@ -645,10 +648,10 @@ def driver_control():
         pto.set(pto_status)
     # Drive Train(integral)
         ratio = 1.3  # Bigger the number, less sensitive
-        integral_decay_rate = 0.000005  # Rate at which integral decays
+        integral_decay_rate = 0.000003  # Rate at which integral decays
         forward = 100 * math.sin(((controller_1.axis3.position()**3) / 636620))
         if controller_1.axis3.position() < 0:
-            forward = 0.65 * forward
+            forward = 0.75 * forward
         rotate_dynamic = (100 / ratio) * math.sin((abs((forward**3)) / 636620)) * math.sin(((controller_1.axis1.position()**3) / 636620))
         rotate_linear = 40 * math.sin(((controller_1.axis1.position()**3) / 636620))
         rotate_linear_lift = 35 * math.sin(((controller_1.axis1.position()**3) / 636620))
@@ -773,57 +776,3 @@ team_position = team_choosing()
 inertial.calibrate()
 # Compe tition functions for the driver control & autonomous tasks
 competition = Competition(driver_control, autonomous)
-
-
-        #arcade drive
-''' original drive code
-        ratio = 1.35 #bigger the number, less the sensitive
-        forward = 100*math.sin(((controller_1.axis3.position()**3)/636620))
-        if controller_1.axis3.position() < 0:
-            forward = 0.7*forward
-        rotate_dynamic = (100/ratio)*math.sin((abs((forward**3))/636620))*math.sin(((controller_1.axis1.position()**3)/636620))
-        rotate_linear = 40*math.sin(((controller_1.axis1.position()**3)/636620))
-        rotate_linear_lift = 35*math.sin(((controller_1.axis1.position()**3)/636620))
-        #total_rotate += rotate_dynamic#integral
-        if -40 <= forward <= 40:
-            #total_rotate = 0#integral
-            if lift_stage != 0:
-                left_drive_smart_speed = forward + rotate_linear_lift
-                right_drive_smart_speed = forward - rotate_linear_lift
-            else:
-                left_drive_smart_speed = forward + rotate_linear
-                right_drive_smart_speed = forward - rotate_linear
-        else:
-            left_drive_smart_speed = forward + (rotate_dynamic)#integral
-            right_drive_smart_speed = forward - (rotate_dynamic)
-
-        if left_drive_smart_speed < 3 and left_drive_smart_speed > -3:
-            if left_drive_smart_stopped:
-                if pto_status == 0:
-                    left_lift.stop()
-                left_drive_smart.stop()
-                left_drive_smart_stopped = 0
-        else:
-            left_drive_smart_stopped = 1
-        if right_drive_smart_speed < 3 and right_drive_smart_speed > -3:
-            if right_drive_smart_stopped:
-                if pto_status == 0:
-                    right_lift.stop()
-                right_drive_smart.stop()
-                right_drive_smart_stopped = 0
-        else:
-            right_drive_smart_stopped = 1
-
-        if left_drive_smart_stopped:
-            left_drive_smart.set_velocity(left_drive_smart_speed, PERCENT)
-            if pto_status == 0:
-                left_lift.set_velocity(left_drive_smart_speed, PERCENT)
-                left_lift.spin(FORWARD)
-            left_drive_smart.spin(FORWARD)
-        if right_drive_smart_stopped:
-            right_drive_smart.set_velocity(right_drive_smart_speed, PERCENT)
-            if pto_status == 0:
-                right_lift.set_velocity(right_drive_smart_speed, PERCENT)
-                right_lift.spin(FORWARD)
-            right_drive_smart.spin(FORWARD)
-'''
