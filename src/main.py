@@ -1,23 +1,34 @@
 # Library imports
 from vex import *
+
 # ------------------------
 # Code by Eric & Peter (mostly Eric)
 # Team 75477M 'Frij'
 # High Stakes 2024-2025
 # ------------------------
+
 # Wiring Guide
-# left drivebase motors: 1, 2, 3
-# right drivebase motors: 4, 5, 6
-# lift: left 7, right 8
-# intake: 9
+# --------------------------------------
+# Left drivebase motors: 1, 2, 3
+# Right drivebase motors: 4, 5, 6
+# Lift motor left: 7
+# Lift motor right: 8
+# Intake: 9
 #
-# inertial: 20
-# lift rotation: 19
+# Clamp distance sensor: 13
+# Forward odometry rotation sensor: 14
+# Intake distance sensor: 15
+# Lift rotation sensor: 16
+# Intake colour sensor: 17
+# Odometry rotation sensor: 18
+# Inertia sensor: 20
 #
-# PTO: A
 # Goal clamp: B
 # Paddle: C
-# Sorter: D
+# Elevation: D
+# LED: E
+# PTO: F
+# --------------------------------------
 
 
 # Brain
