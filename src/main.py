@@ -77,6 +77,8 @@ elevation_status = 0 #0 down, 1 up
 
 brain.screen.draw_image_from_file("begin.png", 0, 0)
 
+
+
 # team and side choosing
 def team_choosing():
     team = ""
@@ -176,10 +178,12 @@ def inertial_turnto(target_angle: float):
     current_angle = inertial.heading(DEGREES)
     right_off = (target_angle-current_angle+360)%360
     left_off = 360-right_off
+    
     if right_off < left_off:
         drivetrain.turn(RIGHT) 
     else:
         drivetrain.turn(LEFT)
+        
     while True:
         right_off = (target_angle - current_angle+360)%360
         left_off = 360-right_off
@@ -307,7 +311,7 @@ def goal_clamp():
             clamp_status = True
             clamp.set(clamp_status)
             while distance.object_distance() < 35:
-                wait(50, MSEC)
+                wait(1000, MSEC)
         elif clamp_status == True and clamp_distance.object_distance() > 35:
             clamp_status = False
             clamp.set(clamp_status)
@@ -541,10 +545,10 @@ def autonomous(): #2 share goal side, 1 share ring side
         drivetrain_forward(3.8, 100)
         wait(0.5, SECONDS)
         drivetrain_turn(1.7, 100)
-        drivetrain_forward(3.6, 100)
+        drivetrain_forward(3.45, 100)
         wait(0.5, SECONDS)
         drivetrain_turn(1.7, 100)
-        drivetrain_forward(4.6, 80)
+        drivetrain_forward(4.6, 90)
         drivetrain_forward(-3.5, 100)
         drivetrain_turn(-0.75, 100)
         drivetrain_forward(2.4, 100)
@@ -559,7 +563,7 @@ def autonomous(): #2 share goal side, 1 share ring side
         drivetrain.drive(FORWARD, 70, PERCENT)
         wait(0.8, SECONDS)
         #mobile goal 2
-        drivetrain_forward(-13.5, 80)
+        drivetrain_forward(-13.3, 75)
         intake.spin(FORWARD)
         clamp.set(True)
         drivetrain_turn(-1.85, 100)
@@ -585,10 +589,10 @@ def autonomous(): #2 share goal side, 1 share ring side
         drivetrain_turn(-2, 100)
         drivetrain.drive(FORWARD, 100, PERCENT)
         wait(0.8, SECONDS)
-        drivetrain_forward(-2, 90)
-        drivetrain_turn(1.6, 100)
+        drivetrain_forward(-2.5, 100)
+        drivetrain_turn(1.9, 100)
         drivetrain.drive(REVERSE, 100, PERCENT)
-        wait(1.2, SECONDS)
+        wait(1.5, SECONDS)
         #third goal
         drivetrain_forward(10.5, 100)
         drivetrain_turn(0.6, 100)
@@ -608,12 +612,10 @@ def autonomous(): #2 share goal side, 1 share ring side
         drivetrain_forward(-2, 100)
         drivetrain_turn(-0.5, 100)
         paddle.set(True)
-        drivetrain_forward(3.3, 100)
-        wait(1, SECONDS)
-        drivetrain.drive(FORWARD, 100, PERCENT)
-        wait(0.5, SECONDS)
-        drivetrain_turn(3, 100)
         intake.stop()
+        drivetrain_forward(3.3, 100)
+        drivetrain.drive(FORWARD, 100, PERCENT)
+        drivetrain_turn(3, 100)
         drivetrain.drive(REVERSE, 100, PERCENT)
         wait(0.8, SECONDS)
         clamp.set(False)

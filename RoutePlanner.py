@@ -166,3 +166,88 @@ def get_move_plan(path: list[Coordinate], radius: float) -> list:
         currentAngle = (currentAngle + relevant_turn_angle) % 360
 
     return result
+
+
+if __name__ == "__main__":
+    class Inertial:
+        def __init__(self, degrees):
+            self.degrees = degrees
+            
+        def heading(self):
+            return self.degrees
+        
+    class Drivetrain:
+        def __init__(self):
+            pass
+        
+        def turn(self, dir):
+            self.dir = dir
+            print(f"Dirve train dir set to {dir}")
+            
+        def set_turn_velocity(self, per):
+            self.vel = per
+            print(f"Drive train vel set to {per}")
+        
+        @staticmethod
+        def stop():
+            print("Stop")
+            
+    inertial = Inertial(0)
+    drivetrain = Drivetrain()
+            
+    def inertial_turnto(target_angle: float):
+        #change kp, ki, kd, accoding to the robot
+        kp = 0.8
+        ki = 0
+        kd = 0
+        previous_error = 0
+        integral = 0
+        false_condition_start_time = None
+        false_condition_duration = 0
+        current_angle = inertial.heading()
+        right_off = (target_angle-current_angle+360)%360
+        left_off = 360-right_off
+        
+        if right_off < left_off:
+            drivetrain.turn(1) 
+        else:
+            drivetrain.turn(-1)
+            
+        while True:
+            current_angle = inertial.heading()
+            right_off = (target_angle - current_angle+360)%360
+            left_off = 360-right_off
+            if right_off > left_off:
+                error = left_off
+            else:
+                error = - right_off
+            integral += error
+            integral = max(min(integral, 30), -30)
+            derivative = error - previous_error
+            pid_output = (kp * error) + (ki * integral) + (kd * derivative)
+            previous_error = error
+            pid_output = max(min(pid_output, 100), -100)
+            drivetrain.set_turn_velocity(pid_output)
+            if not (target_angle - 0.3 < current_angle < target_angle+0.3):
+                # Reset the timer if the condition is false
+                false_condition_start_time = None
+            else:
+                break
+                # Start tracking time if the condition has just become false
+                if false_condition_start_time is None:
+                    false_condition_start_time = brain.timer.time(MSEC)
+                else:
+                    false_condition_duration = brain.timer.time(MSEC) - false_condition_start_time
+            # Break the loop if the condition has been false for more than 0.5 seconds
+            if false_condition_duration >= 50:
+                break
+            
+            # temp
+            inertial.degrees = (inertial.degrees + drivetrain.dir * drivetrain.vel * 0.5) % 360
+            print(f"inertial degrees set to {inertial.degrees}")
+            print("---------------------------------------")
+            input()
+            
+        drivetrain.stop()
+        
+    inertial_turnto(181)
