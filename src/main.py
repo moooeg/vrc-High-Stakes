@@ -88,7 +88,11 @@ elevation_status = 0 #0 down, 1 up
 
 brain.screen.draw_image_from_file("begin.png", 0, 0)
 
-
+# vex controller print def
+def cprint(_input: Any):
+    s = str(_input)
+    controller_1.screen.clear_screen()
+    controller_1.screen.print(s)
 
 # team and side choosing
 def team_choosing():
