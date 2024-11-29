@@ -92,6 +92,7 @@ brain.screen.draw_image_from_file("begin.png", 0, 0)
 def cprint(_input: Any):
     s = str(_input)
     controller_1.screen.clear_screen()
+    controller_1.screen.set_cursor(1,1)
     controller_1.screen.print(s)
 
 # team and side choosing
@@ -183,9 +184,9 @@ def team_choosing():
 # PID turn def
 def inertial_turnto(target_angle: float):
     #change kp, ki, kd, accoding to the robot
-    kp = 0.4
-    ki = 0
-    kd = 0
+    kp = 0.75
+    ki = 0.07
+    kd = 0.3
     previous_error = 0
     integral = 0
     false_condition_start_time = None
@@ -193,19 +194,18 @@ def inertial_turnto(target_angle: float):
     current_angle = inertial.heading(DEGREES)
     right_off = (target_angle-current_angle+360)%360
     left_off = 360-right_off
-    
-    if right_off < left_off:
-        drivetrain.turn(RIGHT) 
-    else:
-        drivetrain.turn(LEFT)
         
     while True:
+        current_angle = inertial.heading(DEGREES)
+        cprint(current_angle)
         right_off = (target_angle - current_angle+360)%360
         left_off = 360-right_off
         if right_off > left_off:
             error = left_off
+            drivetrain.turn(LEFT)
         else:
-            error = - right_off
+            error = right_off
+            drivetrain.turn(RIGHT) 
         integral += error
         integral = max(min(integral, 30), -30)
         derivative = error - previous_error
@@ -213,8 +213,16 @@ def inertial_turnto(target_angle: float):
         previous_error = error
         pid_output = max(min(pid_output, 100), -100)
         drivetrain.set_turn_velocity(pid_output, PERCENT)
-        current_angle = inertial.heading(DEGREES)
-        if not (target_angle - 0.3 < current_angle < target_angle+0.3):
+        
+        if not (target_angle - 0.5 < current_angle < target_angle + 0.5):
+            false_condition_start_time = None
+        else:
+            if not false_condition_start_time:
+                false_condition_start_time = brain.timer.time(MSEC)
+            elif false_condition_start_time + 50 <= brain.timer.time():
+                break
+        
+        """if not (target_angle - 0.5 < current_angle < target_angle + 0.5):
             # Reset the timer if the condition is false
             false_condition_start_time = None
         else:
@@ -225,7 +233,7 @@ def inertial_turnto(target_angle: float):
                 false_condition_duration = brain.timer.time(MSEC) - false_condition_start_time
         # Break the loop if the condition has been false for more than 0.5 seconds
         if false_condition_duration >= 50:
-            break
+            break"""
     drivetrain.stop()
 
 # odometry def
@@ -327,7 +335,7 @@ def goal_clamp():
             clamp.set(clamp_status)
             while distance.object_distance() < 35:
                 wait(1000, MSEC)
-        elif clamp_status == True and clamp_distance.object_distance() > 35:
+        elif clamp_status == True and clamp_distance.object_distance() > 37:
             clamp_status = False
             clamp.set(clamp_status)
         else:
@@ -364,7 +372,7 @@ def ring_sorting_auto(colour):
                 
 def ring_sorting():
     while True:
-        if team_position == "skill":
+        if False:
             if controller_1.buttonR1.pressing():
                 intake.spin(FORWARD, 100, PERCENT)
             elif controller_1.buttonR2.pressing():
@@ -421,7 +429,7 @@ def ring_sorting():
                             wait(30, MSEC)
                         storage.pop(0)
             elif controller_1.buttonR1.pressing() and controller_1.buttonR2.pressing():
-                intake.spin(REVERSE, 100, PERCENT)     
+                intake.spin(REVERSE, 100, PERCENT)   
             else:
                 intake.stop()
 
@@ -560,11 +568,11 @@ def autonomous(): #2 share goal side, 1 share ring side
         drivetrain_forward(3.8, 100)
         wait(0.5, SECONDS)
         drivetrain_turn(1.7, 100)
-        drivetrain_forward(3.45, 100)
+        drivetrain_forward(3.42, 100)
         wait(0.5, SECONDS)
-        drivetrain_turn(1.7, 100)
-        drivetrain_forward(4.6, 90)
-        drivetrain_forward(-3.5, 100)
+        drivetrain_turn(1.64, 100)
+        drivetrain_forward(4.7, 90)
+        drivetrain_forward(-3.55, 100)
         drivetrain_turn(-0.75, 100)
         drivetrain_forward(2.4, 100)
         drivetrain_turn(-3.2, 100)
@@ -587,10 +595,10 @@ def autonomous(): #2 share goal side, 1 share ring side
         drivetrain_turn(-1.8, 100)
         drivetrain_forward(3.55, 100)
         wait(0.5, SECONDS)
-        drivetrain_turn(-1.85, 100)
+        drivetrain_turn(-1.82, 100)
         drivetrain_forward(4.9, 80)
         drivetrain_forward(-3.6, 100)
-        drivetrain_turn(0.75, 100)
+        drivetrain_turn(0.72, 100)
         drivetrain_forward(2.5, 90)
         wait(1, SECONDS)
         drivetrain_turn(3.3, 100)
@@ -615,7 +623,7 @@ def autonomous(): #2 share goal side, 1 share ring side
         drivetrain_forward(6.5, 100)
         intake.stop()
         drivetrain_turn(-3.2, 100)
-        drivetrain_forward(-4.5, 65)
+        drivetrain_forward(-4.5, 60)
         clamp.set(True)
         intake.spin(FORWARD)
         drivetrain_turn(0.3, 100)
@@ -627,15 +635,17 @@ def autonomous(): #2 share goal side, 1 share ring side
         drivetrain_forward(-2, 100)
         drivetrain_turn(-0.5, 100)
         paddle.set(True)
-        intake.stop()
         drivetrain_forward(3.3, 100)
         drivetrain.drive(FORWARD, 100, PERCENT)
+        wait(0.3, SECONDS)
         drivetrain_turn(3, 100)
+        intake.stop()
         drivetrain.drive(REVERSE, 100, PERCENT)
         wait(0.8, SECONDS)
         clamp.set(False)
         paddle.set(False)
         elevation.set(True)
+        intake.spin(REVERSE)
         drivetrain.drive(FORWARD, 100, PERCENT)
         while inertial.orientation(PITCH, DEGREES) < 23:
             wait(50, MSEC)
@@ -654,6 +664,7 @@ def driver_control():
     elif team_position == "blue_1" or team_position == "blue_2":
         ring_sort_status = "RED"
     elif team_position == "skill":
+        ring_sort_status = "BLUE"
         intake.spin(FORWARD)
         wait(0.36, SECONDS)
         intake.stop()
@@ -664,11 +675,11 @@ def driver_control():
     # Status Update
         pto.set(pto_status)
     # Drive Train(integral)
-        ratio = 1.3  # Bigger the number, less sensitive
+        ratio = 1.25  # Bigger the number, less sensitive
         integral_decay_rate = 0.000003  # Rate at which integral decays
         forward = 100 * math.sin(((controller_1.axis3.position()**3) / 636620))
         if controller_1.axis3.position() < 0:
-            forward = 0.75 * forward
+            forward = 0.8 * forward
         rotate_dynamic = (100 / ratio) * math.sin((abs((forward**3)) / 636620)) * math.sin(((controller_1.axis1.position()**3) / 636620))
         rotate_linear = 40 * math.sin(((controller_1.axis1.position()**3) / 636620))
         rotate_linear_lift = 35 * math.sin(((controller_1.axis1.position()**3) / 636620))
@@ -787,6 +798,8 @@ def driver_control():
                 clamp.set(clamp_status)
             while controller_1.buttonX.pressing():
                 wait(30, MSEC)
+    
+    #skill blue alliance stake
 
 #choose team
 team_position = team_choosing() 
