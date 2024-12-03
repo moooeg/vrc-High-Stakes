@@ -79,7 +79,7 @@ right_drive_smart_stopped = 0
 left_drive_smart_speed = 0
 right_drive_smart_speed = 0
 pto_status = 0 #0 drivebase, 1 lift
-clamp_status = 0 #0 release, 1 clamp
+clamp_status = False #0 release, 1 clamp
 lift_status = "stop" #direction of lift, up, down and stop
 lift_stage = 0 # 0 lowest, 2 heighest
 ring_sort_status = "Both" #Red, Blue and Both
@@ -185,8 +185,8 @@ def team_choosing():
 def inertial_turnto(target_angle: float):
     #change kp, ki, kd, accoding to the robot
     kp = 0.75
-    ki = 0.075
-    kd = 0.3
+    ki = 0.11
+    kd = 0.4
     previous_error = 0
     integral = 0
     false_condition_start_time = None
@@ -197,7 +197,6 @@ def inertial_turnto(target_angle: float):
         
     while True:
         current_angle = inertial.heading(DEGREES)
-        cprint(current_angle)
         right_off = (target_angle - current_angle+360)%360
         left_off = 360-right_off
         if right_off > left_off:
@@ -214,7 +213,7 @@ def inertial_turnto(target_angle: float):
         pid_output = max(min(pid_output, 100), -100)
         drivetrain.set_turn_velocity(pid_output, PERCENT)
         
-        if not (target_angle - 0.5 < current_angle < target_angle + 0.5):
+        if not (target_angle - 1 < current_angle < target_angle + 1):
             false_condition_start_time = None
         else:
             if not false_condition_start_time:
@@ -328,18 +327,16 @@ def goal_clamp():
     global clamp_status
     while True:
         if controller_1.buttonL2.pressing():
-                clamp_status = not clamp_status
-                clamp.set(clamp_status)
-                while controller_1.buttonL2.pressing():
-                    wait(500, MSEC)
+            clamp_status = not clamp_status
+            clamp.set(clamp_status)
+            while controller_1.buttonL2.pressing():
+                wait(500, MSEC)
         elif clamp_status == False and clamp_distance.object_distance() < 17:
             clamp_status = True
             clamp.set(clamp_status)
-            while distance.object_distance() < 35:
-                wait(100, MSEC)
         elif clamp_status == True and clamp_distance.object_distance() > 37:
-            clamp_status = False
             clamp.set(clamp_status)
+            clamp_status = False
              
 #ring sorting function
 def ring_sorting_auto(colour):
@@ -379,19 +376,19 @@ def ring_sorting():
                 intake.spin(FORWARD, 100, PERCENT)
                 if ring_sort_status == "RED":
                     if distance.object_distance() < 15.0 and len(storage) > 0 and storage[0] == "RED":
-                        wait(80, MSEC)
+                        wait(50, MSEC)
                         intake.set_velocity(100, PERCENT)
                         intake.spin_for(REVERSE, 2, TURNS)
                         while distance.object_distance() < 15.0:
-                            wait(30, MSEC)
+                            wait(10, MSEC)
                         storage.pop(0)
                 elif ring_sort_status == "BLUE":
                     if distance.object_distance() < 15.0 and len(storage) > 0 and storage[0] == "BLUE":
-                        wait(80, MSEC)
+                        wait(50, MSEC)
                         intake.set_velocity(100, PERCENT)
                         intake.spin_for(REVERSE, 2, TURNS)
                         while distance.object_distance() < 15.0:
-                            wait(30, MSEC)
+                            wait(10, MSEC)
                         storage.pop(0)
             elif controller_1.buttonR2.pressing() and not controller_1.buttonR1.pressing(): # wall goal intake filter
                 intake.spin(FORWARD, 100, PERCENT)
@@ -424,8 +421,8 @@ def ring_sorting():
                             wait(30, MSEC)
                         storage.pop(0)
             elif controller_1.buttonR1.pressing() and controller_1.buttonR2.pressing():
-                intake.spin(REVERSE, 100, PERCENT)   
-            else:
+                intake.spin(REVERSE, 100, PERCENT)
+            elif not controller_1.buttonR1.pressing() or not controller_1.buttonR2.pressing():
                 intake.stop()
 
 #lift up auto def
@@ -500,18 +497,18 @@ def autonomous(): #2 share goal side, 1 share ring side
     if team_position == "blue_1":
         intake.set_velocity(100, PERCENT)
         Thread(ring_sorting_auto,("RED",))
-        drivetrain_forward(2.85, 100)
+        drivetrain_forward(2.8, 100)
         drivetrain_turn(1.72, 100)
-        drivetrain_forward(-1.15, 100)
+        drivetrain_forward(-1.3, 100)
         intake.spin(FORWARD)
         wait(0.4, SECONDS)
         intake.stop()
         wait(0.2, SECONDS)
-        drivetrain_forward(1.4, 100)
-        drivetrain_turn(-2.74, 100)
+        drivetrain_forward(1.35, 100)
+        drivetrain_turn(-2.76, 100)
         drivetrain_forward(-6.5, 75)
         clamp.set(True)
-        drivetrain_turn(-3.55, 100)
+        drivetrain_turn(-3.5, 100)
         intake.spin(FORWARD)
         drivetrain_forward(2.5, 100)
         wait(0.5, SECONDS)
@@ -520,7 +517,7 @@ def autonomous(): #2 share goal side, 1 share ring side
         drivetrain_forward(1.8, 100)
         wait(0.8, SECONDS)
         drivetrain_turn(-0.95, 100)
-        drivetrain_forward(2, 100)
+        drivetrain_forward(2.15, 100)
         wait(0.5, SECONDS)
         drivetrain_forward(-1, 100)
              
@@ -564,16 +561,17 @@ def autonomous(): #2 share goal side, 1 share ring side
         drivetrain_turn(-1.7, 100)
         drivetrain_forward(-3.7, 80)
         clamp.set(True)
+        clamp_status = True
         intake.spin(FORWARD)
         drivetrain_turn(1.7, 100)
         drivetrain_forward(3.8, 100)
         wait(0.5, SECONDS)
         drivetrain_turn(1.7, 100)
-        drivetrain_forward(3.42, 100)
+        drivetrain_forward(3.46, 100)
         wait(0.5, SECONDS)
         drivetrain_turn(1.64, 100)
         drivetrain_forward(4.7, 90)
-        drivetrain_forward(-3.55, 100)
+        drivetrain_forward(-3.4, 100)
         drivetrain_turn(-0.75, 100)
         drivetrain_forward(2.4, 100)
         drivetrain_turn(-3.2, 100)
@@ -598,7 +596,7 @@ def autonomous(): #2 share goal side, 1 share ring side
         wait(0.5, SECONDS)
         drivetrain_turn(-1.82, 100)
         drivetrain_forward(4.9, 80)
-        drivetrain_forward(-3.6, 100)
+        drivetrain_forward(-3.4, 100)
         drivetrain_turn(0.72, 100)
         drivetrain_forward(2.5, 90)
         wait(1, SECONDS)
