@@ -56,8 +56,8 @@ left_motor_b = Motor(Ports.PORT2, GearSetting.RATIO_18_1, True)
 left_motor_c = Motor(Ports.PORT3, GearSetting.RATIO_18_1, True)
 left_drive_smart = MotorGroup(left_motor_a, left_motor_b, left_motor_c)
 right_motor_a = Motor(Ports.PORT4, GearSetting.RATIO_18_1, False)
-right_motor_b = Motor(Ports.PORT5, GearSetting.RATIO_18_1, False)
-right_motor_c = Motor(Ports.PORT6, GearSetting.RATIO_18_1, False)
+right_motor_b = Motor(Ports.PORT18, GearSetting.RATIO_18_1, False)
+right_motor_c = Motor(Ports.PORT19, GearSetting.RATIO_18_1, False)
 right_drive_smart = MotorGroup(right_motor_a, right_motor_b, right_motor_c)
 
 left_lift = Motor(Ports.PORT11, GearSetting.RATIO_18_1, False)
@@ -497,15 +497,15 @@ def driver_control():
     # Status Update
         pto.set(pto_status)
     # Drive Train(integral)
-        ratio = 1.25  # Bigger the number, less sensitive
+        ratio = 1  # Bigger the number, less sensitive
         integral_decay_rate = 0.000003  # Rate at which integral decays
         forward = 100 * math.sin(((controller_1.axis3.position()**3) / 636620))
         if controller_1.axis3.position() < 0:
             forward = 0.8 * forward
         rotate_dynamic = (100 / ratio) * math.sin((abs((forward**3)) / 636620)) * math.sin(((controller_1.axis1.position()**3) / 636620))
-        rotate_linear = 40 * math.sin(((controller_1.axis1.position()**3) / 636620))
+        rotate_linear = 70 * math.sin(((controller_1.axis1.position()**3) / 636620))
         rotate_linear_lift = 35 * math.sin(((controller_1.axis1.position()**3) / 636620))
-        max_integral_limit = 0.3*rotate_dynamic
+        max_integral_limit = 0.4*rotate_dynamic
         
         # Accumulate integral when joystick is pushed
         if abs(controller_1.axis1.position()) >= 30:
