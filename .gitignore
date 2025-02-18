@@ -1,0 +1,11 @@
+# Ignore config files in the .vscode directory
+.vscode/*
+
+# Do not ignore extension recommendations
+!.vscode/extensions.json
+
+# Do not ignore project settings
+!.vscode/vex_project_settings.json
+
+# Ignore workspace settings
+*.code-workspace
