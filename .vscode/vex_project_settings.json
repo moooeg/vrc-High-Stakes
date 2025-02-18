@@ -4,8 +4,8 @@
 		"json": 2
 	},
 	"project": {
-		"name": "vrc-2024-2025",
-		"description": "",
+		"name": "vrc-high-stakes",
+		"description": "Frij 75477M's V5RC High Stakes 2024-2025 robot code.",
 		"creationDate": "Mon, 4 Mar 2024 01:42:48 GMT",
 		"platform": "V5",
 		"language": "python",
