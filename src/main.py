@@ -9,14 +9,14 @@ from vex import *
 
 # --------------------------------------
 # Wiring Guide
-# Updated: 2025-02-18
+# Updated: 2025-02-19
 
 # Port 01 : Front left motor
 # Port 02 : Middle left motor
 # Port 03 : Back left motor
 # Port 04 : Front right motor
-# Port 05 : Middle right motor
-# Port 06 : Back right motor
+# Port 05 : [BROKEN]
+# Port 06 : [BROKEN]
 # Port 07 : Radio
 # Port 08 : Odometry
 # Port 09 : Inertial top
@@ -28,16 +28,16 @@ from vex import *
 # Port 15 : -
 # Port 16 : -
 # Port 17 : -
-# Port 18 : -
-# Port 19 : -
+# Port 18 : Middle right motor
+# Port 19 : Back right motor
 # Port 20 : -
 # Port 21 : -
 
-# Port A  : X
-# Port B  : -
-# Port C  : -
-# Port D  : -
-# Port E  : -
+# Port A  : -
+# Port B  : 
+# Port C  : 
+# Port D  : 
+# Port E  : PTO
 # Port F  : -
 # Port G  : -
 # Port H  : -
@@ -50,24 +50,26 @@ brain=Brain()
 controller_1 = Controller(PRIMARY)
 controller_2 = Controller(PARTNER)
 
-# Motors (A front, C back)
+# Drivetrain (A front, C back)
 left_motor_a = Motor(Ports.PORT1, GearSetting.RATIO_18_1, True)
 left_motor_b = Motor(Ports.PORT2, GearSetting.RATIO_18_1, True)
 left_motor_c = Motor(Ports.PORT3, GearSetting.RATIO_18_1, True)
 left_drive_smart = MotorGroup(left_motor_a, left_motor_b, left_motor_c)
+
 right_motor_a = Motor(Ports.PORT4, GearSetting.RATIO_18_1, False)
 right_motor_b = Motor(Ports.PORT18, GearSetting.RATIO_18_1, False)
 right_motor_c = Motor(Ports.PORT19, GearSetting.RATIO_18_1, False)
 right_drive_smart = MotorGroup(right_motor_a, right_motor_b, right_motor_c)
 
+drivetrain = DriveTrain(left_drive_smart, right_drive_smart, 299.24 , 377.1, 304.8, MM, 5/3)
+
+# PTO
 left_lift = Motor(Ports.PORT11, GearSetting.RATIO_18_1, False)
 right_lift = Motor(Ports.PORT12, GearSetting.RATIO_18_1, True)
 lift = MotorGroup(left_lift, right_lift)
 
-intake = Motor(Ports.PORT9, GearSetting.RATIO_6_1, False) # to delete
-
-# Drivetrain
-drivetrain = DriveTrain(left_drive_smart, right_drive_smart, 299.24 , 377.1, 304.8, MM, 5/3)
+# DELETE
+intake = Motor(Ports.PORT9, GearSetting.RATIO_6_1, False)
 
 # Sensor & Pneumatics
 imu_1 = Inertial(Ports.PORT9 )# top sensor
@@ -80,11 +82,10 @@ distance = Distance(Ports.PORT15) # to delete
 lift_rotation.set_position(360, DEGREES)
 clamp_distance = Distance(Ports.PORT13) # maybe?
 
-pto = DigitalOut(brain.three_wire_port.f) #change
-clamp = DigitalOut(brain.three_wire_port.b) #change
-paddle = DigitalOut(brain.three_wire_port.c) #change
-indicator = DigitalOut(brain.three_wire_port.e) # to delete
-elevation = DigitalOut(brain.three_wire_port.d) #change
+clamp = DigitalOut(brain.three_wire_port.a)
+paddle = DigitalOut(brain.three_wire_port.b)
+elevation = DigitalOut(brain.three_wire_port.c)
+pto = DigitalOut(brain.three_wire_port.d)
 
 # Variables initialisation
 left_drive_smart_stopped = 0
