@@ -620,6 +620,14 @@ def driver_control():
                 clamp.set(clamp_status)
             while controller_1.buttonX.pressing():
                 wait(30, MSEC)
+
+    # thing
+        if controller_1.axis2.position() > 95:
+            lift.spin(REVERSE, 70, PERCENT)
+        elif controller_1.axis2.position() < -95:
+            lift.spin(FORWARD, 70, PERCENT)
+        else:
+            lift.stop()
     
     #skill blue alliance stake
 
