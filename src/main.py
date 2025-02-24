@@ -9,7 +9,7 @@ from vex import *
 
 # --------------------------------------
 # Wiring Guide
-# Updated: 2025-02-19
+# Updated: 2025-02-24
 
 # Port 01 : Front left motor
 # Port 02 : Middle left motor
@@ -34,9 +34,9 @@ from vex import *
 # Port 21 : -
 
 # Port A  : -
-# Port B  : 
-# Port C  : 
-# Port D  : 
+# Port B  : Goal clamp
+# Port C  : - (back right solenoid)
+# Port D  : Elevation angle
 # Port E  : PTO
 # Port F  : -
 # Port G  : -
