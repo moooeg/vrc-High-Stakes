@@ -35,8 +35,8 @@ from vex import *
 
 # Port A  : -
 # Port B  : Goal clamp
-# Port C  : - (back right solenoid)
-# Port D  : Elevation angle
+# Port C  : -
+# Port D  : Lift angle
 # Port E  : PTO
 # Port F  : -
 # Port G  : -
@@ -68,48 +68,53 @@ left_lift = Motor(Ports.PORT11, GearSetting.RATIO_18_1, False)
 right_lift = Motor(Ports.PORT12, GearSetting.RATIO_18_1, True)
 lift = MotorGroup(left_lift, right_lift)
 
-# DELETE
-intake = Motor(Ports.PORT9, GearSetting.RATIO_6_1, False)
-
-# Sensor & Pneumatics
-imu_1 = Inertial(Ports.PORT9 )# top sensor
-imu_2 = Inertial(Ports.PORT10) # bottom sensor
-lift_rotation = Rotation(Ports.PORT16, False) # maybe?
+# Autonomous: Inertial (1 top, 2 bottom), odometry & auto-clamping
+imu_1 = Inertial(Ports.PORT9 )
+imu_2 = Inertial(Ports.PORT10)
 odometry = Rotation(Ports.PORT8, False)
-odometry_turn = Rotation(Ports.PORT14, False) # to delete
-optical = Optical(Ports.PORT17) # to delete
-distance = Distance(Ports.PORT15) # to delete
-lift_rotation.set_position(360, DEGREES)
-clamp_distance = Distance(Ports.PORT13) # maybe?
+clamp_distance = Distance(Ports.PORT13) # CHANGE PORT
 
-clamp = DigitalOut(brain.three_wire_port.a)
-paddle = DigitalOut(brain.three_wire_port.b)
-elevation = DigitalOut(brain.three_wire_port.c)
-pto = DigitalOut(brain.three_wire_port.d)
+# Pneumatics (3-pin)
+clamp = DigitalOut(brain.three_wire_port.b)
+change_name = DigitalOut(brain.three_wire_port.c) # CHANGE VAR NAME
+lift_angle = DigitalOut(brain.three_wire_port.d)
+pto = DigitalOut(brain.three_wire_port.e)
+
+# ---------------------- DELETE --------------------------
+intake = Motor(Ports.PORT9, GearSetting.RATIO_6_1, False)
+odometry_turn = Rotation(Ports.PORT14, False)
+lift_rotation = Rotation(Ports.PORT16, False)
+optical = Optical(Ports.PORT17)
+distance = Distance(Ports.PORT15)
+# --------------------------------------------------------
 
 # Variables initialisation
 left_drive_smart_stopped = 0
 right_drive_smart_stopped = 0
 left_drive_smart_speed = 0
 right_drive_smart_speed = 0
-pto_status = 0 #0 drivebase, 1 lift
-clamp_status = False #0 release, 1 clamp
-lift_status = "stop" #direction of lift, up, down and stop
-lift_stage = 0 # 0 lowest, 2 heighest
-ring_sort_status = "Both" #Red, Blue and Both
+
+pto_status = 0 # 0 drivebase, 1 lift
+clamp_status = False # 0 release, 1 clamp
+lift_status = "stop" # 'up', 'down' and 'stop' (direction of lift)
+lift_stage = 0 # 0 low, 2 high
+lift_angle_status = 0 # 0 low angle, 1 high angle
+
+# DELETE : ring sort
+ring_sort_status = "Both" # 'Red', 'Blue' and 'Both'
 storage = []
-elevation_status = 0 #0 down, 1 up
 
-brain.screen.draw_image_from_file("begin.png", 0, 0)
-
-# vex controller print def
+# Controller screen print
 def cprint(_input: Any):
     s = str(_input)
     controller_1.screen.clear_screen()
     controller_1.screen.set_cursor(1,1)
     controller_1.screen.print(s)
 
-# team and side choosing
+# SS GUI init
+brain.screen.draw_image_from_file("begin.png", 0, 0)
+
+# Side Selection GUI
 def team_choosing():
     team = ""
     position = ""
@@ -476,7 +481,7 @@ def autonomous(): #2 share goal side, 1 share ring side
         
 #  Driver Control def
 def driver_control():
-    global left_drive_smart_stopped, right_drive_smart_stopped, pto_status, clamp_status, lift_status, lift_stage, ring_sort_status, elevation_status, ring_sort_status, storage
+    global left_drive_smart_stopped, right_drive_smart_stopped, pto_status, clamp_status, lift_status, lift_stage, ring_sort_status, lift_angle_status, ring_sort_status, storage
     drivetrain.set_stopping(COAST)
     lift_status = 0
     integral_rotate = 0
@@ -568,12 +573,7 @@ def driver_control():
             add_color("RED")
         if 160.0 < optical.hue() < 250.0: # type: ignore
             add_color("BLUE")
-            
-    # paddle control
-        if controller_1.buttonL1.pressing():
-            paddle.set(True)
-        else:
-            paddle.set(False)
+        
             
     # lift contol
         if controller_1.axis2.position() > 95 and lift_stage == 0:
@@ -612,10 +612,10 @@ def driver_control():
             pto_status = 0
             pto.set(pto_status)
             
-    #elevation
+    # Lift angle control
         if controller_1.buttonX.pressing():
-            elevation_status = not elevation_status
-            elevation.set(elevation_status)
+            lift_angle_status = not lift_angle_status
+            lift_angle.set(lift_angle_status)
             if clamp_status == 1:
                 clamp_status = 0
                 clamp.set(clamp_status)
