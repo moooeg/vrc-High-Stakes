@@ -9,14 +9,14 @@ from vex import *
 
 # --------------------------------------
 # Wiring Guide
-# Updated: 2025-02-18
+# Updated: 2025-02-24
 
 # Port 01 : Front left motor
 # Port 02 : Middle left motor
 # Port 03 : Back left motor
 # Port 04 : Front right motor
-# Port 05 : Middle right motor
-# Port 06 : Back right motor
+# Port 05 : [BROKEN]
+# Port 06 : [BROKEN]
 # Port 07 : Radio
 # Port 08 : Odometry
 # Port 09 : Inertial top
@@ -28,16 +28,16 @@ from vex import *
 # Port 15 : -
 # Port 16 : -
 # Port 17 : -
-# Port 18 : -
-# Port 19 : -
+# Port 18 : Middle right motor
+# Port 19 : Back right motor
 # Port 20 : -
 # Port 21 : -
 
-# Port A  : X
-# Port B  : -
+# Port A  : -
+# Port B  : Goal clamp
 # Port C  : -
-# Port D  : -
-# Port E  : -
+# Port D  : Lift angle
+# Port E  : PTO
 # Port F  : -
 # Port G  : -
 # Port H  : -
@@ -50,65 +50,71 @@ brain=Brain()
 controller_1 = Controller(PRIMARY)
 controller_2 = Controller(PARTNER)
 
-# Motors (A front, C back)
+# Drivetrain (A front, C back)
 left_motor_a = Motor(Ports.PORT1, GearSetting.RATIO_18_1, True)
 left_motor_b = Motor(Ports.PORT2, GearSetting.RATIO_18_1, True)
 left_motor_c = Motor(Ports.PORT3, GearSetting.RATIO_18_1, True)
 left_drive_smart = MotorGroup(left_motor_a, left_motor_b, left_motor_c)
+
 right_motor_a = Motor(Ports.PORT4, GearSetting.RATIO_18_1, False)
-right_motor_b = Motor(Ports.PORT5, GearSetting.RATIO_18_1, False)
-right_motor_c = Motor(Ports.PORT6, GearSetting.RATIO_18_1, False)
+right_motor_b = Motor(Ports.PORT18, GearSetting.RATIO_18_1, False)
+right_motor_c = Motor(Ports.PORT19, GearSetting.RATIO_18_1, False)
 right_drive_smart = MotorGroup(right_motor_a, right_motor_b, right_motor_c)
 
+drivetrain = DriveTrain(left_drive_smart, right_drive_smart, 299.24 , 377.1, 304.8, MM, 5/3)
+
+# PTO
 left_lift = Motor(Ports.PORT11, GearSetting.RATIO_18_1, False)
 right_lift = Motor(Ports.PORT12, GearSetting.RATIO_18_1, True)
 lift = MotorGroup(left_lift, right_lift)
 
-intake = Motor(Ports.PORT9, GearSetting.RATIO_6_1, False) # to delete
-
-# Drivetrain
-drivetrain = DriveTrain(left_drive_smart, right_drive_smart, 299.24 , 377.1, 304.8, MM, 5/3)
-
-# Sensor & Pneumatics
-imu_1 = Inertial(Ports.PORT9 )# top sensor
-imu_2 = Inertial(Ports.PORT10) # bottom sensor
-lift_rotation = Rotation(Ports.PORT16, False) # maybe?
+# Autonomous: Inertial (1 top, 2 bottom), odometry & auto-clamping
+imu_1 = Inertial(Ports.PORT9 )
+imu_2 = Inertial(Ports.PORT10)
 odometry = Rotation(Ports.PORT8, False)
-odometry_turn = Rotation(Ports.PORT14, False) # to delete
-optical = Optical(Ports.PORT17) # to delete
-distance = Distance(Ports.PORT15) # to delete
-lift_rotation.set_position(360, DEGREES)
-clamp_distance = Distance(Ports.PORT13) # maybe?
+clamp_distance = Distance(Ports.PORT13) # CHANGE PORT
 
-pto = DigitalOut(brain.three_wire_port.f) #change
-clamp = DigitalOut(brain.three_wire_port.b) #change
-paddle = DigitalOut(brain.three_wire_port.c) #change
-indicator = DigitalOut(brain.three_wire_port.e) # to delete
-elevation = DigitalOut(brain.three_wire_port.d) #change
+# Pneumatics (3-pin)
+clamp = DigitalOut(brain.three_wire_port.b)
+change_name = DigitalOut(brain.three_wire_port.c) # CHANGE VAR NAME
+lift_angle = DigitalOut(brain.three_wire_port.d)
+pto = DigitalOut(brain.three_wire_port.e)
+
+# ---------------------- DELETE --------------------------
+intake = Motor(Ports.PORT9, GearSetting.RATIO_6_1, False)
+odometry_turn = Rotation(Ports.PORT14, False)
+lift_rotation = Rotation(Ports.PORT16, False)
+optical = Optical(Ports.PORT17)
+distance = Distance(Ports.PORT15)
+# --------------------------------------------------------
 
 # Variables initialisation
 left_drive_smart_stopped = 0
 right_drive_smart_stopped = 0
 left_drive_smart_speed = 0
 right_drive_smart_speed = 0
-pto_status = 0 #0 drivebase, 1 lift
-clamp_status = False #0 release, 1 clamp
-lift_status = "stop" #direction of lift, up, down and stop
-lift_stage = 0 # 0 lowest, 2 heighest
-ring_sort_status = "Both" #Red, Blue and Both
+
+pto_status = 0 # 0 drivebase, 1 lift
+clamp_status = False # 0 release, 1 clamp
+lift_status = "stop" # 'up', 'down' and 'stop' (direction of lift)
+lift_stage = 0 # 0 low, 2 high
+lift_angle_status = 0 # 0 low angle, 1 high angle
+
+# DELETE : ring sort
+ring_sort_status = "Both" # 'Red', 'Blue' and 'Both'
 storage = []
-elevation_status = 0 #0 down, 1 up
 
-brain.screen.draw_image_from_file("begin.png", 0, 0)
-
-# vex controller print def
+# Controller screen print
 def cprint(_input: Any):
     s = str(_input)
     controller_1.screen.clear_screen()
     controller_1.screen.set_cursor(1,1)
     controller_1.screen.print(s)
 
-# team and side choosing
+# SS GUI init
+brain.screen.draw_image_from_file("begin.png", 0, 0)
+
+# Side Selection GUI
 def team_choosing():
     team = ""
     position = ""
@@ -475,7 +481,7 @@ def autonomous(): #2 share goal side, 1 share ring side
         
 #  Driver Control def
 def driver_control():
-    global left_drive_smart_stopped, right_drive_smart_stopped, pto_status, clamp_status, lift_status, lift_stage, ring_sort_status, elevation_status, ring_sort_status, storage
+    global left_drive_smart_stopped, right_drive_smart_stopped, pto_status, clamp_status, lift_status, lift_stage, ring_sort_status, lift_angle_status, ring_sort_status, storage
     drivetrain.set_stopping(COAST)
     lift_status = 0
     integral_rotate = 0
@@ -497,15 +503,15 @@ def driver_control():
     # Status Update
         pto.set(pto_status)
     # Drive Train(integral)
-        ratio = 1.2  # Bigger the number, less sensitive
+        ratio = 1.25  # Bigger the number, less sensitive
         integral_decay_rate = 0.000003  # Rate at which integral decays
         forward = 100 * math.sin(((controller_1.axis3.position()**3) / 636620))
         if controller_1.axis3.position() < 0:
             forward = 0.8 * forward
         rotate_dynamic = (100 / ratio) * math.sin((abs((forward**3)) / 636620)) * math.sin(((controller_1.axis1.position()**3) / 636620))
-        rotate_linear = 50 * math.sin(((controller_1.axis1.position()**3) / 636620))
+        rotate_linear = 40 * math.sin(((controller_1.axis1.position()**3) / 636620))
         rotate_linear_lift = 35 * math.sin(((controller_1.axis1.position()**3) / 636620))
-        max_integral_limit = 0.3*rotate_dynamic
+        max_integral_limit = 0.4*rotate_dynamic
         
         # Accumulate integral when joystick is pushed
         if abs(controller_1.axis1.position()) >= 30:
@@ -567,12 +573,7 @@ def driver_control():
             add_color("RED")
         if 160.0 < optical.hue() < 250.0: # type: ignore
             add_color("BLUE")
-            
-    # paddle control
-        if controller_1.buttonL1.pressing():
-            paddle.set(True)
-        else:
-            paddle.set(False)
+        
             
     # lift contol
         if controller_1.axis2.position() > 95 and lift_stage == 0:
@@ -611,15 +612,23 @@ def driver_control():
             pto_status = 0
             pto.set(pto_status)
             
-    #elevation
+    # Lift angle control
         if controller_1.buttonX.pressing():
-            elevation_status = not elevation_status
-            elevation.set(elevation_status)
+            lift_angle_status = not lift_angle_status
+            lift_angle.set(lift_angle_status)
             if clamp_status == 1:
                 clamp_status = 0
                 clamp.set(clamp_status)
             while controller_1.buttonX.pressing():
                 wait(30, MSEC)
+
+    # thing
+        if controller_1.axis2.position() > 95:
+            lift.spin(REVERSE, 70, PERCENT)
+        elif controller_1.axis2.position() < -95:
+            lift.spin(FORWARD, 70, PERCENT)
+        else:
+            lift.stop()
     
     #skill blue alliance stake
 
