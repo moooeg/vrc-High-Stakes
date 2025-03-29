@@ -9,7 +9,7 @@ from vex import *
 
 # --------------------------------------
 # Wiring Guide
-# Updated: 2025-02-24
+# Updated: 2025-03-27
 
 # Port 01 : Front left motor
 # Port 02 : Middle left motor
@@ -80,8 +80,8 @@ change_name = DigitalOut(brain.three_wire_port.c) # CHANGE VAR NAME
 lift_angle = DigitalOut(brain.three_wire_port.d)
 pto = DigitalOut(brain.three_wire_port.e)
 
-# ---------------------- DELETE --------------------------
-intake = Motor(Ports.PORT9, GearSetting.RATIO_6_1, False)
+intake1 = Motor(Ports.PORT9, GearSetting.RATIO_6_1, False)
+intake2 = Motor(Ports.PORT10, GearSetting.RATIO_6_1, False)
 odometry_turn = Rotation(Ports.PORT14, False)
 lift_rotation = Rotation(Ports.PORT16, False)
 optical = Optical(Ports.PORT17)
@@ -96,13 +96,6 @@ right_drive_smart_speed = 0
 
 pto_status = 0 # 0 drivebase, 1 lift
 clamp_status = False # 0 release, 1 clamp
-lift_status = "stop" # 'up', 'down' and 'stop' (direction of lift)
-lift_stage = 0 # 0 low, 2 high
-lift_angle_status = 0 # 0 low angle, 1 high angle
-
-# DELETE : ring sort
-ring_sort_status = "Both" # 'Red', 'Blue' and 'Both'
-storage = []
 
 # Controller screen print
 def cprint(_input: Any):
@@ -115,90 +108,121 @@ def cprint(_input: Any):
 brain.screen.draw_image_from_file("begin.png", 0, 0)
 
 # Side Selection GUI
-def team_choosing():
+class ButtonPosition:
+    def __init__(self, x1: int, y1: int, x2: int, y2: int) -> None:
+        """
+        x1, y1: top left
+
+        x2, y2: bottom right
+        """
+        self.x1 = x1
+        self.y1 = y1
+        self.x2 = x2
+        self.y2 = y2
+
+    def pressing(self, x: int, y: int) -> bool:
+        """
+        Return true if the passed x and y coordinate is inside this button
+        """
+        return (self.x1 <= x <= self.x2) and (self.y1 <= y <= self.y2)
+
+GUI_BUTTONS_POSITIONS = {
+    "top": {
+        "1": ButtonPosition(139, 8, 240, 26),
+        "2": ButtonPosition(249, 8, 351, 26),
+        "3": ButtonPosition(358, 8, 461, 26)
+    },
+    "side": {
+        "1": ButtonPosition(19, 52, 138, 73),
+        "2": ButtonPosition(19, 85, 138, 107),
+        "3": ButtonPosition(19, 120, 138, 142)
+    }
+}
+
+def wait_until_release(button, time) -> None:
+    """
+    Block until the passed button is no longer pressed
+
+    Args:
+        button (Button): the button to be listen, chould be anything with a "pressing" method
+        time: time to wait in ms
+    """
+    while button.pressing():
+        wait(time, MSEC)
+
+# Side Selection GUI
+def team_choosing() -> str:
+    """
+    Start choosing team, can use controller button to select or use GUI on brain.
+
+    Returns:
+        str: Literal [ "red_1", "red_2", "blue_1", "blue_2", "skill" ]
+    """
+    # SS GUI init
+    brain.screen.draw_image_from_file("begin.png", 0, 0)
+
     team = ""
     position = ""
+    confirmed = False
+
     while True:
-        if controller_1.buttonL1.pressing():
-            brain.screen.draw_image_from_file( "red_1_confirmed.png", 0, 0)
-            while controller_1.buttonL1.pressing():
-                wait(5, MSEC)
-            return "red_1"
-        elif controller_1.buttonL2.pressing():
-            brain.screen.draw_image_from_file( "red_2_confirmed.png", 0, 0)
-            while controller_1.buttonL2.pressing():
-                wait(5, MSEC)
-            return "red_2"
-        elif controller_1.buttonR1.pressing():
-            brain.screen.draw_image_from_file( "blue_1_confirmed.png", 0, 0)
-            while controller_1.buttonR1.pressing():
-                wait(5, MSEC)
-            return "blue_1"
-        elif controller_1.buttonR2.pressing():
-            brain.screen.draw_image_from_file( "blue_2_confirmed.png", 0, 0)
-            while controller_1.buttonR2.pressing():
-                wait(5, MSEC)
-            return "blue_2"
-        if brain.screen.pressing() and 8 <= brain.screen.y_position() <= 26:
-            # Team choosing
-            if 139 <= brain.screen.x_position() <= 240:
-                # Red
-                team = "red"
-                brain.screen.draw_image_from_file( "red_begin.png", 0, 0)
-                position = ""
-            elif 249 <= brain.screen.x_position() <= 351:
-                # Blue
-                team = "blue"
-                brain.screen.draw_image_from_file("blue_begin.png", 0, 0)
-                position = ""
-            elif 358 <= brain.screen.x_position() <= 461:
-                # Skill
-                team = "skill"
-                brain.screen.draw_image_from_file( "skill_begin.png", 0, 0)
-                position = ""
-        elif brain.screen.pressing() and 19 <= brain.screen.x_position() <= 138 and not team == "":
-            # Position sellction
-            if brain.screen.y_position() > 52 and brain.screen.y_position() < 73:
-                if team == "red":
-                    # Red 1
-                    brain.screen.draw_image_from_file( "red_1.png", 0, 0)
-                elif team == "blue":
-                    # Blue 1
-                    brain.screen.draw_image_from_file( "blue_1.png", 0, 0)
-                elif team == "skill":
-                    # Skill confirm
-                    brain.screen.draw_image_from_file( "skill_confirmed.png", 0, 0)
-                    return "skill"
-                position = "1"
-            elif brain.screen.pressing() and 85 <= brain.screen.y_position() <= 107 and not team == "":
-                if team == "red":
-                    # Red 2
-                    brain.screen.draw_image_from_file( "red_2.png", 0, 0)
-                elif team == "blue":
-                    # Blue 2
-                    brain.screen.draw_image_from_file( "blue_2.png", 0, 0)
-                position = "2"
-            elif brain.screen.pressing() and 120 <= brain.screen.y_position() <= 142 and not team == "":
-                if team == "red":
-                    # Red confirm
-                    if position == "1":
-                        # Red 1 confirm
-                        brain.screen.draw_image_from_file( "red_1_confirmed.png", 0, 0)
-                    elif position == "2":
-                        # Red 2 confirm
-                        brain.screen.draw_image_from_file( "red_2_confirmed.png", 0, 0)
-                elif team == "blue":
-                    # Blue confirm
-                    if position == "1":
-                        # Blue 1 confirm
-                        brain.screen.draw_image_from_file( "blue_1_confirmed.png", 0, 0)
-                    elif position == "2":
-                        # Blue 2 confirm
-                        brain.screen.draw_image_from_file( "blue_2_confirmed.png", 0, 0)
-                return team + "_" + position
-            while brain.screen.pressing():
-                wait(5, MSEC)
         wait(5, MSEC)
+
+        # exit
+        if confirmed:
+            brain.screen.draw_image_from_file(team+position+"_confirmed.png", 0, 0)
+            return team + position
+
+        # controller
+        if controller_1.buttonL1.pressing():
+            team = "red"
+            position = "_1"
+            confirmed = True
+        elif controller_1.buttonL2.pressing():
+            team = "red"
+            position = "_2"
+            confirmed = True
+        elif controller_1.buttonR1.pressing():
+            team = "blue"
+            position = "_1"
+            confirmed = True
+        elif controller_1.buttonR2.pressing():
+            team = "blue"
+            position = "_2"
+            confirmed = True
+
+        # brain
+        if brain.screen.pressing():
+            x = brain.screen.x_position()
+            y = brain.screen.y_position()
+
+            if GUI_BUTTONS_POSITIONS["top"]["1"].pressing(x, y):
+                team = "red"
+                position = ""
+                brain.screen.draw_image_from_file("red_begin.png", 0, 0)
+            elif GUI_BUTTONS_POSITIONS["top"]["2"].pressing(x, y):
+                team = "blue"
+                position = ""
+                brain.screen.draw_image_from_file("blue_begin.png", 0, 0)
+            elif GUI_BUTTONS_POSITIONS["top"]["3"].pressing(x, y):
+                team = "skill"
+                position = ""
+                brain.screen.draw_image_from_file("skill_begin.png", 0, 0)
+
+            if team:
+                if GUI_BUTTONS_POSITIONS["side"]["1"].pressing(x, y):
+                    if team == "skill":
+                        confirmed = True
+                    else:
+                        position = "_1"
+                        brain.screen.draw_image_from_file(team+"_1.png", 0, 0)
+                elif GUI_BUTTONS_POSITIONS["side"]["2"].pressing(x, y) and team != "skill":
+                    position = "_2"
+                    brain.screen.draw_image_from_file(team+"_2.png", 0, 0)
+                elif GUI_BUTTONS_POSITIONS["side"]["3"].pressing(x, y) and position and team != "skill":
+                    confirmed = True
+            
+            wait_until_release(brain.screen, 50)
 
 def curvature(radius, speed, direction: TurnType, target_turns, time): #all units in inches
     #change accoding to the robot
@@ -341,11 +365,6 @@ def drivetrain_turn(target_turns: float, speed=100, time_out = 0):
             break
     drivetrain.stop()
 
-# ring holding list def
-def add_color(new_color):
-    if len(storage) >= 2:
-        storage.pop(0)  # Remove the first color if the list is full
-    storage.append(new_color)
 
 #auto clamp def
 def goal_clamp():
@@ -354,116 +373,38 @@ def goal_clamp():
         if controller_1.buttonL2.pressing():
             clamp_status = not clamp_status
             clamp.set(clamp_status)
-            while controller_1.buttonL2.pressing():
-                wait(500, MSEC)
-        elif clamp_status == False and clamp_distance.object_distance() < 17:
-            clamp_status = True
-            clamp.set(clamp_status)
-        elif clamp_status == True and clamp_distance.object_distance() > 34:
-            clamp_status = False
-            clamp.set(clamp_status)
-             
-#ring sorting function
-def ring_sorting_auto(colour):
+            wait_until_release(controller_1.buttonL2, 50)
+            
+def intake():
     while True:
-        if 0 < optical.hue() < 30:
-            add_color("RED")
-        if 160.0 < optical.hue() < 250.0: # type: ignore
-            add_color("BLUE")
-        if colour == "RED":
-            if distance.object_distance() < 15.0 and len(storage) > 0 and storage[0] == "RED":
-                intake.set_velocity(100, PERCENT)
-                wait(100, MSEC)
-                intake.spin_for(REVERSE, 2, TURNS)
-                while distance.object_distance() < 15.0:
-                    wait(30, MSEC)
-                storage.pop(0)
-        elif colour == "BLUE":
-            if distance.object_distance() < 15.0 and len(storage) > 0 and storage[0] == "BLUE":
-                intake.set_velocity(100, PERCENT)
-                wait(100, MSEC)
-                intake.spin_for(REVERSE, 2, TURNS)
-                while distance.object_distance() < 15.0:
-                    wait(30, MSEC)
-                storage.pop(0)
-                
-def ring_sorting():
-    while True:
-        if False:
-            if controller_1.buttonR1.pressing():
-                intake.spin(FORWARD, 100, PERCENT)
-            elif controller_1.buttonR2.pressing():
-                intake.spin(REVERSE, 100, PERCENT)
-            else:
-                intake.stop()
+        if controller_1.buttonR2.pressing():
+            intake1.spin(FORWARD)
+            intake2.spin(FORWARD)
+            if intake1.torque() > 2:
+                intake1.stop()
+                wait_until_release(controller_1.buttonR2, 50)
+            if intake2.torque() > 2:
+                intake2.stop()
+                wait_until_release(controller_1.buttonR2, 50)
+        elif controller_1.buttonR1.pressing():
+            intake1.spin(REVERSE)
+            intake2.spin(REVERSE)
+            if intake1.torque() > 2:
+                intake1.stop()
+                wait_until_release(controller_1.buttonR2, 50)
+            if intake2.torque() > 2:
+                intake2.stop()
+                wait_until_release(controller_1.buttonR2, 50)
         else:
-            if controller_1.buttonR1.pressing() and not controller_1.buttonR2.pressing(): # normal intake filter
-                intake.spin(FORWARD, 100, PERCENT)
-                if ring_sort_status == "RED":
-                    if distance.object_distance() < 15.0 and len(storage) > 0 and storage[0] == "RED":
-                        wait(50, MSEC)
-                        intake.set_velocity(100, PERCENT)
-                        intake.spin_for(REVERSE, 2, TURNS)
-                        while distance.object_distance() < 15.0:
-                            wait(10, MSEC)
-                        storage.pop(0)
-                elif ring_sort_status == "BLUE":
-                    if distance.object_distance() < 15.0 and len(storage) > 0 and storage[0] == "BLUE":
-                        wait(50, MSEC)
-                        intake.set_velocity(100, PERCENT)
-                        intake.spin_for(REVERSE, 2, TURNS)
-                        while distance.object_distance() < 15.0:
-                            wait(10, MSEC)
-                        storage.pop(0)
-            elif controller_1.buttonR2.pressing() and not controller_1.buttonR1.pressing(): # wall goal intake filter
-                intake.spin(FORWARD, 100, PERCENT)
-                if ring_sort_status == "RED":
-                    if distance.object_distance() < 30.0 and len(storage) > 0 and storage[0] == "BLUE":
-                        intake.set_velocity(100, PERCENT)
-                        intake.spin_for(REVERSE, 6, TURNS)
-                        while distance.object_distance() < 15.0:
-                            wait(30, MSEC) 
-                        storage.pop(0)
-                    if distance.object_distance() < 15.0 and len(storage) > 0 and storage[0] == "RED":
-                        intake.set_velocity(100, PERCENT)
-                        wait(80, MSEC)
-                        intake.spin_for(REVERSE, 2, TURNS)
-                        while distance.object_distance() < 15.0:
-                            wait(30, MSEC)
-                        storage.pop(0)
-                elif ring_sort_status == "BLUE":
-                    if distance.object_distance() < 30.0 and len(storage) > 0 and storage[0] == "RED":
-                        intake.set_velocity(100, PERCENT)
-                        intake.spin_for(REVERSE, 6, TURNS)
-                        while distance.object_distance() < 15.0:
-                            wait(30, MSEC) 
-                        storage.pop(0)
-                    if distance.object_distance() < 15.0 and len(storage) > 0 and storage[0] == "BLUE":
-                        intake.set_velocity(100, PERCENT)
-                        wait(80, MSEC)
-                        intake.spin_for(REVERSE, 2, TURNS)
-                        while distance.object_distance() < 15.0:
-                            wait(30, MSEC)
-                        storage.pop(0)
-            elif controller_1.buttonR1.pressing() and controller_1.buttonR2.pressing():
-                intake.spin(REVERSE, 100, PERCENT)
-            elif not controller_1.buttonR1.pressing() or not controller_1.buttonR2.pressing():
-                intake.stop()
+            intake1.stop()
+            intake1.stop()
 
-#lift up auto def
-def lift_up(height):
-    pto.set(True)
-    wait(0.2, SECONDS)
-    lift.spin(REVERSE, 100, PERCENT)
-    while lift_rotation.position(TURNS) > height:
-       wait(50, MSEC)
-    lift.set_stopping(HOLD)
-    lift.stop()
 
 # Autonomous def
 def autonomous(): #2 share goal side, 1 share ring side
     global ring_sort_status, clamp_status
-    intake.set_velocity(100, PERCENT)
+    intake1.set_velocity(100, PERCENT)
+    intake2.set_velocity(100, PERCENT)
     if team_position == "red_1":
         pass
 
@@ -486,18 +427,14 @@ def driver_control():
     lift_status = 0
     integral_rotate = 0
     brain.timer.clear()
-    intake.set_velocity(100, PERCENT)
+    intake1.set_velocity(100, PERCENT)
+    intake2.set_velocity(100, PERCENT)
     if team_position == "red_1" or team_position == "red_2":
         ring_sort_status = "BLUE"
     elif team_position == "blue_1" or team_position == "blue_2":
         ring_sort_status = "RED"
     elif team_position == "skill":
         ring_sort_status = "BLUE"
-        intake.spin(FORWARD)
-        wait(0.36, SECONDS)
-        intake.stop()
-    Thread(ring_sorting)
-    Thread(goal_clamp)
     # Process every 20 milliseconds
     while True:
     # Status Update
@@ -525,12 +462,8 @@ def driver_control():
 
         # Add integral component to turning calculation
         if -30 <= forward <= 30:
-            if lift_stage != 0:
-                left_drive_smart_speed = forward + rotate_linear_lift
-                right_drive_smart_speed = forward - rotate_linear_lift
-            else:
-                left_drive_smart_speed = forward + rotate_linear
-                right_drive_smart_speed = forward - rotate_linear
+            left_drive_smart_speed = forward + rotate_linear
+            right_drive_smart_speed = forward - rotate_linear
         else:
             # Use the integral component
             left_drive_smart_speed = forward + rotate_dynamic - integral_rotate
@@ -567,70 +500,6 @@ def driver_control():
                 right_lift.set_velocity(right_drive_smart_speed, PERCENT)
                 right_lift.spin(FORWARD)
             right_drive_smart.spin(FORWARD)
-            
-    #intake color sensor
-        if optical.color() == Color.RED:
-            add_color("RED")
-        if 160.0 < optical.hue() < 250.0: # type: ignore
-            add_color("BLUE")
-        
-            
-    # lift contol
-        if controller_1.axis2.position() > 95 and lift_stage == 0:
-            lift_status = "up"
-            pto_status = 1
-            pto.set(pto_status)
-            wait(50, MSEC)
-            lift.spin(REVERSE, 100, PERCENT)
-        if controller_1.axis2.position() < -95 and lift_stage == 1:
-            lift_status = "down"
-            lift.spin(FORWARD, 80, PERCENT)
-            
-        '''if lift_stage == 0:
-            if lift_rotation.position(TURNS) < 0.65 and lift_status == "up":
-                lift.set_stopping(HOLD)
-                lift_status = "stop"
-                lift_stage = 1
-                lift.stop()
-        elif lift_stage == 1:
-            if lift_rotation.position(TURNS) < -0.1 and lift_status == "up":
-                lift.set_stopping(HOLD)
-                lift_status = "stop"
-                lift_stage = 2
-                lift.stop()'''
-        if lift_rotation.position(TURNS) < 0.3 and lift_status == "up":
-            lift.set_stopping(HOLD)
-            lift_status = "stop"
-            lift_stage = 1
-            lift.stop()
-        
-        if lift_rotation.position(TURNS) > 1 and lift_status == "down":
-            lift.stop()
-            lift.set_stopping(COAST)
-            lift_status = "stop"
-            lift_stage = 0
-            pto_status = 0
-            pto.set(pto_status)
-            
-    # Lift angle control
-        if controller_1.buttonX.pressing():
-            lift_angle_status = not lift_angle_status
-            lift_angle.set(lift_angle_status)
-            if clamp_status == 1:
-                clamp_status = 0
-                clamp.set(clamp_status)
-            while controller_1.buttonX.pressing():
-                wait(30, MSEC)
-
-    # thing
-        if controller_1.axis2.position() > 95:
-            lift.spin(REVERSE, 70, PERCENT)
-        elif controller_1.axis2.position() < -95:
-            lift.spin(FORWARD, 70, PERCENT)
-        else:
-            lift.stop()
-    
-    #skill blue alliance stake
 
 #choose team
 team_position = team_choosing()
