@@ -11,33 +11,33 @@ from vex import *
 # Wiring Guide
 # Updated: 2025-03-27
 
-# Port 01 : Front left motor
-# Port 02 : Middle left motor
-# Port 03 : Back left motor
-# Port 04 : Front right motor
+# Port 01 : RF Motor
+# Port 02 : -
+# Port 03 : -
+# Port 04 : -
 # Port 05 : [BROKEN]
 # Port 06 : [BROKEN]
-# Port 07 : Radio
-# Port 08 : Odometry
-# Port 09 : Inertial top
-# Port 10 : Inertial bottom
-# Port 11 : Left PTO motor
-# Port 12 : Right PTO motor
+# Port 07 : -
+# Port 08 : -
+# Port 09 : -
+# Port 10 : L PTO Motor
+# Port 11 : R PTO Motor
+# Port 12 : RB Motor
 # Port 13 : -
 # Port 14 : -
 # Port 15 : -
 # Port 16 : -
 # Port 17 : -
-# Port 18 : Middle right motor
-# Port 19 : Back right motor
-# Port 20 : -
-# Port 21 : -
+# Port 18 : LF Motor
+# Port 19 : LB Motor
+# Port 20 : [BROKEN]
+# Port 21 : Radio
 
-# Port A  : -
-# Port B  : Goal clamp
-# Port C  : -
-# Port D  : Lift angle
-# Port E  : PTO
+# Port A  : Intake Lift [SOLENOID RB]
+# Port B  : Elevation   [SOLENOID RT]
+# Port C  : PTO         [SOLENOID LB]
+# Port D  : Goal Clamp  [SOLENOID LT]
+# Port E  : -
 # Port F  : -
 # Port G  : -
 # Port H  : -
@@ -51,21 +51,21 @@ controller_1 = Controller(PRIMARY)
 controller_2 = Controller(PARTNER)
 
 # Drivetrain (A front, C back)
-left_motor_a = Motor(Ports.PORT1, GearSetting.RATIO_18_1, True)
-left_motor_b = Motor(Ports.PORT2, GearSetting.RATIO_18_1, True)
-left_motor_c = Motor(Ports.PORT3, GearSetting.RATIO_18_1, True)
-left_drive_smart = MotorGroup(left_motor_a, left_motor_b, left_motor_c)
+left_motor_a = Motor(Ports.PORT18, GearSetting.RATIO_18_1, True)
+left_motor_b = Motor(Ports.PORT19, GearSetting.RATIO_18_1, True)
+# left_motor_c = Motor(Ports.PORT3, GearSetting.RATIO_18_1, True)
+left_drive_smart = MotorGroup(left_motor_a,  left_motor_b)
 
-right_motor_a = Motor(Ports.PORT4, GearSetting.RATIO_18_1, False)
-right_motor_b = Motor(Ports.PORT18, GearSetting.RATIO_18_1, False)
-right_motor_c = Motor(Ports.PORT19, GearSetting.RATIO_18_1, False)
-right_drive_smart = MotorGroup(right_motor_a, right_motor_b, right_motor_c)
+right_motor_a = Motor(Ports.PORT1, GearSetting.RATIO_18_1, False)
+right_motor_b = Motor(Ports.PORT12, GearSetting.RATIO_18_1, False)
+# right_motor_c = Motor(Ports.PORT19, GearSetting.RATIO_18_1, False)
+right_drive_smart = MotorGroup(right_motor_a, right_motor_b)
 
 drivetrain = DriveTrain(left_drive_smart, right_drive_smart, 299.24 , 377.1, 304.8, MM, 5/3)
 
 # PTO
-left_lift = Motor(Ports.PORT11, GearSetting.RATIO_18_1, False)
-right_lift = Motor(Ports.PORT12, GearSetting.RATIO_18_1, True)
+left_lift = Motor(Ports.PORT10, GearSetting.RATIO_18_1, False)
+right_lift = Motor(Ports.PORT11, GearSetting.RATIO_18_1, True)
 lift = MotorGroup(left_lift, right_lift)
 
 # Autonomous: Inertial (1 top, 2 bottom), odometry & auto-clamping
@@ -75,10 +75,10 @@ odometry = Rotation(Ports.PORT8, False)
 clamp_distance = Distance(Ports.PORT13) # CHANGE PORT
 
 # Pneumatics (3-pin)
-clamp = DigitalOut(brain.three_wire_port.b)
-change_name = DigitalOut(brain.three_wire_port.c) # CHANGE VAR NAME
-lift_angle = DigitalOut(brain.three_wire_port.d)
-pto = DigitalOut(brain.three_wire_port.e)
+intake_lift = DigitalOut(brain.three_wire_port.a)
+elevation = DigitalOut(brain.three_wire_port.b)
+pto = DigitalOut(brain.three_wire_port.c)
+clamp = DigitalOut(brain.three_wire_port.d)
 
 intake1 = Motor(Ports.PORT9, GearSetting.RATIO_6_1, False)
 intake2 = Motor(Ports.PORT10, GearSetting.RATIO_6_1, False)
