@@ -12,14 +12,14 @@ from vex import *
 # Updated: 2025-03-27
 
 # Port 01 : RF Motor
-# Port 02 : -
+# Port 02 : intake stage 2
 # Port 03 : -
 # Port 04 : -
 # Port 05 : [BROKEN]
 # Port 06 : [BROKEN]
 # Port 07 : -
 # Port 08 : -
-# Port 09 : -
+# Port 09 : intake stage 1
 # Port 10 : L PTO Motor
 # Port 11 : R PTO Motor
 # Port 12 : RB Motor
@@ -52,7 +52,7 @@ controller_2 = Controller(PARTNER)
 
 # Drivetrain (A front, C back)
 left_motor_a = Motor(Ports.PORT18, GearSetting.RATIO_18_1, True)
-left_motor_b = Motor(Ports.PORT19, GearSetting.RATIO_18_1, True)
+left_motor_b = Motor(Ports.PORT19, GearSetting.RATIO_18_1, False)
 # left_motor_c = Motor(Ports.PORT3, GearSetting.RATIO_18_1, True)
 left_drive_smart = MotorGroup(left_motor_a,  left_motor_b)
 
@@ -64,13 +64,13 @@ right_drive_smart = MotorGroup(right_motor_a, right_motor_b)
 drivetrain = DriveTrain(left_drive_smart, right_drive_smart, 299.24 , 377.1, 304.8, MM, 5/3)
 
 # PTO
-left_lift = Motor(Ports.PORT10, GearSetting.RATIO_18_1, False)
+left_lift = Motor(Ports.PORT10, GearSetting.RATIO_18_1, True)
 right_lift = Motor(Ports.PORT11, GearSetting.RATIO_18_1, True)
 lift = MotorGroup(left_lift, right_lift)
 
 # Autonomous: Inertial (1 top, 2 bottom), odometry & auto-clamping
-imu_1 = Inertial(Ports.PORT9 )
-imu_2 = Inertial(Ports.PORT10)
+imu_1 = Inertial(Ports.PORT16)
+imu_2 = Inertial(Ports.PORT17)
 odometry = Rotation(Ports.PORT8, False)
 clamp_distance = Distance(Ports.PORT13) # CHANGE PORT
 
@@ -81,7 +81,7 @@ pto = DigitalOut(brain.three_wire_port.c)
 clamp = DigitalOut(brain.three_wire_port.d)
 
 intake1 = Motor(Ports.PORT9, GearSetting.RATIO_6_1, False)
-intake2 = Motor(Ports.PORT10, GearSetting.RATIO_6_1, False)
+intake2 = Motor(Ports.PORT2, GearSetting.RATIO_6_1, True)
 odometry_turn = Rotation(Ports.PORT14, False)
 lift_rotation = Rotation(Ports.PORT16, False)
 optical = Optical(Ports.PORT17)
@@ -365,7 +365,34 @@ def drivetrain_turn(target_turns: float, speed=100, time_out = 0):
             break
     drivetrain.stop()
 
-
+#ladybrown def
+def ladybrown():
+    stage = 0 #0: down, 1: loading, 2: over the top
+    if controller_1.axis2.position() > 95 and stage == 0:
+        pto_status = 1
+        pto.set(pto_status)
+        wait(50, MSEC)
+        lift.spin(REVERSE, 100, PERCENT)
+        if lift_rotation.position(TURNS) > 1.2:
+            lift.stop()
+            stage = 1
+    if controller_1.axis2.position() > 95 and stage == 1:
+        lift.spin(REVERSE, 100, PERCENT)
+        if lift_rotation.position(TURNS) > 4:
+            lift.stop()
+            stage = 2
+    if controller_1.axis2.position() < -95 and stage == 2:
+        lift.spin(FORWARD, 100, PERCENT)
+        if lift_rotation.position(TURNS) <1.25:
+            lift.stop()
+            stage = 1
+    if controller_1.axis2.position() < -95 and stage == 1:
+        lift.spin(FORWARD, 100, PERCENT)
+        if lift_rotation.position(TURNS) < 1.01:
+            lift.stop()
+            stage = 0
+            pto_status = 0
+            pto.set(pto_status)          
 #auto clamp def
 def goal_clamp():
     global clamp_status
@@ -374,7 +401,7 @@ def goal_clamp():
             clamp_status = not clamp_status
             clamp.set(clamp_status)
             wait_until_release(controller_1.buttonL2, 50)
-            
+#intake def            
 def intake():
     while True:
         if controller_1.buttonR2.pressing():
@@ -397,14 +424,14 @@ def intake():
                 wait_until_release(controller_1.buttonR2, 50)
         else:
             intake1.stop()
-            intake1.stop()
+            intake2.stop()
 
 
 # Autonomous def
 def autonomous(): #2 share goal side, 1 share ring side
     global ring_sort_status, clamp_status
     intake1.set_velocity(100, PERCENT)
-    intake2.set_velocity(100, PERCENT)
+    intake2.set_velocity(90, PERCENT)
     if team_position == "red_1":
         pass
 
@@ -428,26 +455,29 @@ def driver_control():
     integral_rotate = 0
     brain.timer.clear()
     intake1.set_velocity(100, PERCENT)
-    intake2.set_velocity(100, PERCENT)
+    intake2.set_velocity(90, PERCENT)
     if team_position == "red_1" or team_position == "red_2":
         ring_sort_status = "BLUE"
     elif team_position == "blue_1" or team_position == "blue_2":
         ring_sort_status = "RED"
     elif team_position == "skill":
         ring_sort_status = "BLUE"
+        
+    Thread(intake)
+    Thread(goal_clamp)
+    Thread(ladybrown)
     # Process every 20 milliseconds
     while True:
     # Status Update
         pto.set(pto_status)
     # Drive Train(integral)
-        ratio = 1.25  # Bigger the number, less sensitive
+        ratio = 1.15  # Bigger the number, less sensitive
         integral_decay_rate = 0.000003  # Rate at which integral decays
         forward = 100 * math.sin(((controller_1.axis3.position()**3) / 636620))
         if controller_1.axis3.position() < 0:
             forward = 0.8 * forward
         rotate_dynamic = (100 / ratio) * math.sin((abs((forward**3)) / 636620)) * math.sin(((controller_1.axis1.position()**3) / 636620))
         rotate_linear = 40 * math.sin(((controller_1.axis1.position()**3) / 636620))
-        rotate_linear_lift = 35 * math.sin(((controller_1.axis1.position()**3) / 636620))
         max_integral_limit = 0.4*rotate_dynamic
         
         # Accumulate integral when joystick is pushed
