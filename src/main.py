@@ -27,7 +27,7 @@ from vex import *
 # Port 14 : -
 # Port 15 : -
 # Port 16 : -
-# Port 17 : -
+# Port 17 : lift rotation
 # Port 18 : LF Motor
 # Port 19 : LB Motor
 # Port 20 : [BROKEN]
@@ -83,7 +83,7 @@ clamp = DigitalOut(brain.three_wire_port.d)
 intake1 = Motor(Ports.PORT9, GearSetting.RATIO_6_1, False)
 intake2 = Motor(Ports.PORT2, GearSetting.RATIO_6_1, True)
 odometry_turn = Rotation(Ports.PORT14, False)
-lift_rotation = Rotation(Ports.PORT16, False)
+lift_rotation = Rotation(Ports.PORT17, False)
 optical = Optical(Ports.PORT17)
 distance = Distance(Ports.PORT15)
 # --------------------------------------------------------
@@ -368,31 +368,80 @@ def drivetrain_turn(target_turns: float, speed=100, time_out = 0):
 #ladybrown def
 def ladybrown():
     stage = 0 #0: down, 1: loading, 2: over the top
-    if controller_1.axis2.position() > 95 and stage == 0:
-        pto_status = 1
-        pto.set(pto_status)
-        wait(50, MSEC)
-        lift.spin(REVERSE, 100, PERCENT)
-        if lift_rotation.position(TURNS) > 1.2:
-            lift.stop()
-            stage = 1
-    if controller_1.axis2.position() > 95 and stage == 1:
-        lift.spin(REVERSE, 100, PERCENT)
-        if lift_rotation.position(TURNS) > 4:
-            lift.stop()
+    lift_status = "stop"
+    while True:
+        if controller_1.axis2.position() > 95:  
+            if stage == 0:  # Move from Stage 0 to Stage 1
+                lift_status = "up"
+                pto_status = 1
+                stage = 1
+                pto.set(pto_status)
+                lift.spin(REVERSE, 100, PERCENT)
+                while controller_1.axis2.position() > 95:
+                    wait(50, MSEC)
+            elif stage == 1:  # Move from Stage 1 to Stage 2
+                lift_status = "up"
+                lift.spin(REVERSE, 100, PERCENT)
+
+        if lift_rotation.position(TURNS) > 1.23 and lift_status == "up" and stage == 1:
+            lift.set_stopping(HOLD)
+            lift_status = "stop"
             stage = 2
-    if controller_1.axis2.position() < -95 and stage == 2:
-        lift.spin(FORWARD, 100, PERCENT)
-        if lift_rotation.position(TURNS) <1.25:
             lift.stop()
+
+        if controller_1.axis2.position() < 10 and stage == 2:  # Release joystick → Move to Stage 1
+            lift_status = "down"
+            lift.spin(FORWARD, 80, PERCENT)
+
+        if lift_rotation.position(TURNS) < 1.23 and lift_status == "down" and stage == 2:
+            lift.set_stopping(HOLD)
+            lift_status = "stop"
             stage = 1
-    if controller_1.axis2.position() < -95 and stage == 1:
-        lift.spin(FORWARD, 100, PERCENT)
-        if lift_rotation.position(TURNS) < 1.01:
             lift.stop()
-            stage = 0
+
+        if controller_1.axis2.position() < -95 and stage == 1:  # Pull joystick down → Move to Stage 0
+            lift_status = "down"
+            lift.spin(FORWARD, 80, PERCENT)
+
+        if lift_rotation.position(TURNS) < 1.01 and lift_status == "down" and stage == 1:
+            lift_status = "stop"
+            lift.set_stopping(COAST)
+            lift.stop()
             pto_status = 0
-            pto.set(pto_status)          
+            stage = 0
+            pto.set(pto_status)
+        '''
+        if controller_1.axis2.position() > 95 and stage == 0:
+            lift_status = "up"
+            pto_status = 1
+            pto.set(pto_status)
+            wait(50, MSEC)
+            lift.spin(REVERSE, 100, PERCENT)
+        if controller_1.axis2.position() < -95 and (stage == 1 or stage == 2):
+            lift_status = "down"
+            lift.spin(FORWARD, 80, PERCENT)
+        
+        if (lift_rotation.position(TURNS) > 1.23 and lift_status == "up" and stage == 0) or (lift_rotation.position(TURNS) <1.23 and lift_status == "down" and stage == 2):
+            lift.set_stopping(HOLD)
+            lift_status = "stop"
+            stage = 1
+            lift.stop()
+            
+        if lift_rotation.position(TURNS) > 4 and lift_status == "up" and stage == 1:
+            lift.set_stopping(HOLD)
+            lift_status = "stop"
+            stage = 2
+            lift.stop()
+            
+        if lift_rotation.position(TURNS) < 1.01 and lift_status == "down" and stage == 1:
+            lift_status = "stop"
+            lift.set_stopping(COAST)
+            lift.stop()
+            pto_status = 0
+            stage = 0
+            pto.set(pto_status)
+        '''
+ 
 #auto clamp def
 def goal_clamp():
     global clamp_status
