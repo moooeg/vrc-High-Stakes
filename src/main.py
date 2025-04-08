@@ -371,76 +371,11 @@ def ladybrown():
     lift_status = "stop"
     while True:
         if controller_1.axis2.position() > 95:  
-            if stage == 0:  # Move from Stage 0 to Stage 1
-                lift_status = "up"
-                pto_status = 1
-                stage = 1
-                pto.set(pto_status)
-                lift.spin(REVERSE, 100, PERCENT)
-                while controller_1.axis2.position() > 95:
-                    wait(50, MSEC)
-            elif stage == 1:  # Move from Stage 1 to Stage 2
-                lift_status = "up"
-                lift.spin(REVERSE, 100, PERCENT)
-
-        if lift_rotation.position(TURNS) > 1.23 and lift_status == "up" and stage == 1:
-            lift.set_stopping(HOLD)
-            lift_status = "stop"
-            stage = 2
-            lift.stop()
-
-        if controller_1.axis2.position() < 10 and stage == 2:  # Release joystick → Move to Stage 1
-            lift_status = "down"
-            lift.spin(FORWARD, 80, PERCENT)
-
-        if lift_rotation.position(TURNS) < 1.23 and lift_status == "down" and stage == 2:
-            lift.set_stopping(HOLD)
-            lift_status = "stop"
-            stage = 1
-            lift.stop()
-
-        if controller_1.axis2.position() < -95 and stage == 1:  # Pull joystick down → Move to Stage 0
-            lift_status = "down"
-            lift.spin(FORWARD, 80, PERCENT)
-
-        if lift_rotation.position(TURNS) < 1.01 and lift_status == "down" and stage == 1:
-            lift_status = "stop"
-            lift.set_stopping(COAST)
-            lift.stop()
-            pto_status = 0
-            stage = 0
-            pto.set(pto_status)
-        '''
-        if controller_1.axis2.position() > 95 and stage == 0:
-            lift_status = "up"
-            pto_status = 1
-            pto.set(pto_status)
-            wait(50, MSEC)
+            lift.spin(FORWARD, 100, PERCENT)
+        elif controller_1.axis2.position() < -95:  
             lift.spin(REVERSE, 100, PERCENT)
-        if controller_1.axis2.position() < -95 and (stage == 1 or stage == 2):
-            lift_status = "down"
-            lift.spin(FORWARD, 80, PERCENT)
-        
-        if (lift_rotation.position(TURNS) > 1.23 and lift_status == "up" and stage == 0) or (lift_rotation.position(TURNS) <1.23 and lift_status == "down" and stage == 2):
-            lift.set_stopping(HOLD)
-            lift_status = "stop"
-            stage = 1
+        else:
             lift.stop()
-            
-        if lift_rotation.position(TURNS) > 4 and lift_status == "up" and stage == 1:
-            lift.set_stopping(HOLD)
-            lift_status = "stop"
-            stage = 2
-            lift.stop()
-            
-        if lift_rotation.position(TURNS) < 1.01 and lift_status == "down" and stage == 1:
-            lift_status = "stop"
-            lift.set_stopping(COAST)
-            lift.stop()
-            pto_status = 0
-            stage = 0
-            pto.set(pto_status)
-        '''
  
 #auto clamp def
 def goal_clamp():
@@ -520,7 +455,7 @@ def driver_control():
     # Status Update
         pto.set(pto_status)
     # Drive Train(integral)
-        ratio = 1.15  # Bigger the number, less sensitive
+        ratio = 1.05  # Bigger the number, less sensitive
         integral_decay_rate = 0.000003  # Rate at which integral decays
         forward = 100 * math.sin(((controller_1.axis3.position()**3) / 636620))
         if controller_1.axis3.position() < 0:
@@ -584,6 +519,7 @@ def driver_control():
 team_position = team_choosing()
 imu_1.calibrate()
 imu_2.calibrate()
+imu_1.set_turn_type(LEFT)
 while imu_1.calibrate():
     wait(50, MSEC) 
 # Compe tition functions for the driver control & autonomous tasks
