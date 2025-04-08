@@ -52,7 +52,7 @@ controller_2 = Controller(PARTNER)
 
 # Drivetrain (A front, C back)
 left_motor_a = Motor(Ports.PORT18, GearSetting.RATIO_18_1, True)
-left_motor_b = Motor(Ports.PORT19, GearSetting.RATIO_18_1, False)
+left_motor_b = Motor(Ports.PORT10, GearSetting.RATIO_18_1, True)
 # left_motor_c = Motor(Ports.PORT3, GearSetting.RATIO_18_1, True)
 left_drive_smart = MotorGroup(left_motor_a,  left_motor_b)
 
@@ -64,7 +64,7 @@ right_drive_smart = MotorGroup(right_motor_a, right_motor_b)
 drivetrain = DriveTrain(left_drive_smart, right_drive_smart, 299.24 , 377.1, 304.8, MM, 5/3)
 
 # PTO
-left_lift = Motor(Ports.PORT10, GearSetting.RATIO_18_1, True)
+left_lift = Motor(Ports.PORT19, GearSetting.RATIO_18_1, False)
 right_lift = Motor(Ports.PORT11, GearSetting.RATIO_18_1, True)
 lift = MotorGroup(left_lift, right_lift)
 
@@ -76,9 +76,10 @@ clamp_distance = Distance(Ports.PORT13) # CHANGE PORT
 
 # Pneumatics (3-pin)
 intake_lift = DigitalOut(brain.three_wire_port.a)
-elevation = DigitalOut(brain.three_wire_port.b)
+paddle = DigitalOut(brain.three_wire_port.b)
 pto = DigitalOut(brain.three_wire_port.c)
 clamp = DigitalOut(brain.three_wire_port.d)
+
 
 intake1 = Motor(Ports.PORT9, GearSetting.RATIO_6_1, False)
 intake2 = Motor(Ports.PORT2, GearSetting.RATIO_6_1, True)
@@ -95,7 +96,7 @@ left_drive_smart_speed = 0
 right_drive_smart_speed = 0
 
 pto_status = 0 # 0 drivebase, 1 lift
-clamp_status = False # 0 release, 1 clamp
+clamp_status = True # 1 release, 0 clamp
 
 # Controller screen print
 def cprint(_input: Any):
@@ -365,17 +366,45 @@ def drivetrain_turn(target_turns: float, speed=100, time_out = 0):
             break
     drivetrain.stop()
 
+#paddle def
+def paddle_control():
+    paddle_status = False
+    paddle.set(paddle_status)
+    while True:
+        if controller_1.buttonL1.pressing():
+            paddle_status = not paddle_status
+            paddle.set(paddle_status)
+            wait_until_release(controller_1.buttonL1, 50)
+
 #ladybrown def
 def ladybrown():
+    global pto_status
     stage = 0 #0: down, 1: loading, 2: over the top
-    lift_status = "stop"
     while True:
-        if controller_1.axis2.position() > 95:  
-            lift.spin(FORWARD, 100, PERCENT)
-        elif controller_1.axis2.position() < -95:  
-            lift.spin(REVERSE, 100, PERCENT)
-        else:
+        if controller_1.buttonA.pressing():
+            if stage == 0:
+                pto_status = True
+                lift.set_stopping(HOLD)
+                wait(100, MSEC)
+                while lift_rotation.angle()> 350 or lift_rotation.angle()<10:
+                    lift.spin(REVERSE, 20, PERCENT)
+                stage = 1
+            elif stage == 1:
+                while lift_rotation.angle()<355:
+                    lift.spin(FORWARD, 20, PERCENT)
+                pto_status = False
+                lift.set_stopping(COAST)
+                stage = 0
             lift.stop()
+        elif controller_1.buttonB.pressing() and stage == 1:
+            while lift_rotation.angle()>220:
+                    lift.spin(REVERSE, 100, PERCENT)
+            while lift_rotation.angle()<310:
+                    lift.spin(FORWARD, 100, PERCENT)
+            lift.stop()
+            
+            
+            
  
 #auto clamp def
 def goal_clamp():
@@ -450,6 +479,7 @@ def driver_control():
     Thread(intake)
     Thread(goal_clamp)
     Thread(ladybrown)
+    Thread(paddle_control)
     # Process every 20 milliseconds
     while True:
     # Status Update
