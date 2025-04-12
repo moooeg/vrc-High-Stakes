@@ -71,7 +71,7 @@ lift = MotorGroup(left_lift, right_lift)
 # Autonomous: Inertial (1 top, 2 bottom), odometry & auto-clamping
 imu_1 = Inertial(Ports.PORT16)
 imu_2 = Inertial(Ports.PORT17)
-odometry = Rotation(Ports.PORT8, True)
+odometry = Rotation(Ports.PORT8, False)
 clamp_distance = Distance(Ports.PORT13) # CHANGE PORT
 
 # Pneumatics (3-pin)
@@ -368,39 +368,40 @@ def drivetrain_turn(target_turns: float, speed=100, time_out = 0):
 
 def ladybrown_pid(target_angle: float, time_out = 0):
     movement_start_time = brain.timer.time(MSEC)
-    kp = 0.2
-    ki = 0.05
+    kp = 0.1
+    ki = 0.01
     error = 0
     integral = 0
     false_condition_start_time = None
-
-    lift.spin(FORWARD)
+    if lift_rotation.angle() < 0:
+        current_angle = lift_rotation.angle()+360
+    else:
+        current_angle = lift_rotation.angle()
+    error = current_angle-target_angle
+    lift.spin(REVERSE)
     while True:
-        if 80 > lift_rotation.angle() > 0:
+        if lift_rotation.angle() < 0:
             current_angle = lift_rotation.angle()+360
         else:
             current_angle = lift_rotation.angle()
         
-        error = target_angle - current_angle
-        integral = (integral + error) * 0.95        
-
-        lift_output = kp*error + ki*integral
+        error = current_angle-target_angle
+        integral += error
+        integral *= 0.95
+        lift_output = kp*error+ki*integral
         lift.set_velocity(lift_output, PERCENT)
-        
-        if abs(error) >= 5:
+        if not abs(error) > 5:
             # Reset the timer if the condition is false
             false_condition_start_time = None
         else:
-            if false_condition_start_time is None:
+            if false_condition_start_time == None:
                 false_condition_start_time = brain.timer.time(MSEC)
-                # cprint(false_condition_start_time)
-            elif  brain.timer.time(MSEC) > false_condition_start_time + 100 :
-                cprint(1)
+            elif false_condition_start_time + 100 <= brain.timer.time(MSEC):
                 break
-        if brain.timer.time(MSEC) - movement_start_time > time_out and time_out > 0:
-            cprint(2)
+        if movement_start_time-brain.timer.time(MSEC) > time_out and time_out > 0:
             break
-    lift.stop()
+    drivetrain.stop()    
+    cprint("finish")
     
 #paddle def
 def paddle_control():
@@ -415,77 +416,41 @@ def paddle_control():
 def ladybrown_new():
     global pto_status
     stage = 0
-    kp = 0.008
-    ki = 0.0001
-    sum_error = 0
-    error = 0
-    target_angle = 0
     while True:
         wait(10, MSEC)
         if stage == 0:
             if controller_1.axis2.position() > 95:
-                sum_error = 0
                 pto_status = True
                 lift.set_stopping(HOLD)
                 wait(100, MSEC)
-                if 0 < lift_rotation.angle() < 20:
-                    error = lift_rotation.angle()+360-345
-                    sum_error += error
-                else:
-                    error = lift_rotation.angle()-345
-                    sum_error += error
-                while error > 10:
-                    if 0 < lift_rotation.angle() < 20:
-                        error = lift_rotation.angle()-345+360
-                        sum_error += error
-                    else:
-                        error = lift_rotation.angle()-345
-                        sum_error += error
-                    lift.spin(REVERSE, kp*error+ 0.9*sum_error*ki, PERCENT)
-                lift.stop()
+                ladybrown_pid(345)
                 stage = 1
                 while controller_1.axis2.position() > 20:
                     wait(50, MSEC)
         elif stage == 1:
             if controller_1.axis2.position() < -95:
-                sum_error = 0
-                while lift_rotation.angle() < 355:
-                    if 0 < lift_rotation.angle() < 20:
-                        error = lift_rotation.angle()+360-355
-                        sum_error += error
-                    else:
-                        error = 355 - lift_rotation.angle()
-                        sum_error += error
-                    lift.spin(FORWARD, kp*error+ 0.9*sum_error*ki, PERCENT)
+                ladybrown_pid(360)
                 pto_status = False
                 lift.set_stopping(COAST)
                 lift.stop()
                 stage = 0
-            
-            sum_error = 0
             if controller_1.axis2.position() > 90:
-                target_angle = 210
+                ladybrown_pid(210)
             else:
-                target_angle = 345
-            cprint(target_angle)
-            error = lift_rotation.angle() - target_angle
-            sum_error += error
-            if abs(error) > 2:
-                lift.spin(REVERSE, (kp*error+ 0.9*sum_error*ki) * 100 , PERCENT) 
-            else:
-                lift.set_stopping(HOLD)
-                lift.stop()           
+                ladybrown_pid(345)      
+        elif controller_1.buttonA.pressing():
+            ladybrown_pid(180)
+            break   
+
  
 #auto clamp def
 def goal_clamp():
     global clamp_status
-    clamp.set(clamp_status)
     while True:
         if controller_1.buttonL2.pressing():
             clamp_status = not clamp_status
             clamp.set(clamp_status)
             wait_until_release(controller_1.buttonL2.pressing, 50)
-        
 #intake def            
 def intake():
     while True:
@@ -515,27 +480,11 @@ def intake():
 
 # Autonomous def
 def autonomous(): #2 share goal side, 1 share ring side
-    global ring_sort_status, clamp_status, pto_status, drivetrain
+    global ring_sort_status, clamp_status
     intake1.set_velocity(100, PERCENT)
     intake2.set_velocity(90, PERCENT)
     if team_position == "red_1":
-        drivetrain_forward(0.73, 100)
-        pto_status = True
-        pto.set(pto_status)
-        wait(50, MSEC)
-        ladybrown_pid(180)
-        drivetrain_forward(-1.4, 100)
-        drivetrain.turn(LEFT, 58, PERCENT)
-        wait(0.3, SECONDS)
-        drivetrain.stop()
-        drivetrain_forward(0.9, 100)
-        intake1.spin(REVERSE)
-        intake_lift.set(False)
-        wait(500, MSEC)
-        drivetrain_forward(-0.9, 100)
-        
-
-        
+        pass
 
     if team_position == "red_2":
         pass
@@ -564,9 +513,7 @@ def driver_control():
         ring_sort_status = "RED"
     elif team_position == "skill":
         ring_sort_status = "BLUE"
-    
-    #thread all functions
-    intake_lift.set(False)
+        
     Thread(intake)
     Thread(goal_clamp)
     Thread(ladybrown_new)
@@ -638,13 +585,12 @@ def driver_control():
         
 
 #choose team
-intake_lift.set(True)
 team_position = team_choosing()
 imu_1.calibrate()
+imu_2.calibrate()
 imu_1.set_turn_type(LEFT)
 while imu_1.calibrate():
-    wait(50, MSEC)
-
+    wait(50, MSEC) 
     
 # Competition functions for the driver control & autonomous tasks
 competition = Competition(driver_control, autonomous)
