@@ -11,6 +11,7 @@ Having the code in a git remote allows us to collaborate as a team easily as eve
 - Our program includes a selection screen for easily selecting autonomous code suited for each starting position.
 - Code in this repository is similar to our code used last year for Over Under. Last year's code can be found [in a seperate repo](https://github.com/peterdev22/vrc-over-under).
 
+## Frij @ Australian Nationals
 #### Mechanical Systems
 - 7 motor drivetrain (6×11W, 2×5.5W) at 333 RPM
 - 1 motor intake at 600 RPM
@@ -25,6 +26,22 @@ Having the code in a git remote allows us to collaborate as a team easily as eve
 - Ring colour sorting using a colour and distance sensor
 - Auto ring redirect (into lift) using a distance sensor
 - Auto goal clamping using a distance sensor
+
+## Frij @ VEX Worlds
+#### Mechanical Systems
+- 6 motor drivetrain (6×11W) at 333 RPM
+- 2 motor dual-stage intake
+- PTO to switch 2 drivetrain motors to a 'lady brown' lift
+- Passive tier 1 elevation
+- Pneumatics (2 air canisters)
+  - 1 cylinder PTO
+  - 1 cylinder paddle
+  - 1 cylinder intake lift
+  - 2 cylinder goal clamp
+
+#### Automatic Systems
+- Odometry + inertial sensors for autonomous
+- Rotation sensor for 'lady brown' positioning
 
 <br>
 
