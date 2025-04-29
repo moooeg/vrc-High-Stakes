@@ -366,10 +366,10 @@ def drivetrain_turn(target_turns: float, speed=100, time_out = 0):
             break
     drivetrain.stop()
 
-def ladybrown_pid(target_angle: float, time_out = 0):
+def ladybrown_pid(target_angle: float, speed = 100, time_out = 0):
     movement_start_time = brain.timer.time(MSEC)
     kp = 0.2
-    ki = 0.05
+    ki = 0.03
     error = 0
     integral = 0
     false_condition_start_time = None
@@ -384,7 +384,7 @@ def ladybrown_pid(target_angle: float, time_out = 0):
         error = target_angle - current_angle
         integral = (integral + error) * 0.95        
 
-        lift_output = kp*error + ki*integral
+        lift_output = (speed/100)*(kp*error + ki*integral)
         lift.set_velocity(lift_output, PERCENT)
         
         if abs(error) >= 5:
@@ -408,21 +408,27 @@ def paddle_control():
     paddle.set(paddle_status)
     while True:
         if controller_1.buttonL1.pressing():
-            paddle_status = not paddle_status
+            paddle_status = True
             paddle.set(paddle_status)
             wait_until_release(controller_1.buttonL1.pressing, 50)
+        else:
+            paddle_status = False
+            paddle.set(paddle_status)
             
 def ladybrown_new():
     global pto_status
     stage = 0
-    kp = 0.008
+    kp = 0.005
     ki = 0.0001
     sum_error = 0
     error = 0
     target_angle = 0
     while True:
         wait(10, MSEC)
-        if stage == 0:
+        if controller_1.buttonX.pressing():
+            ladybrown_pid(180)
+            return
+        elif stage == 0:
             if controller_1.axis2.position() > 95:
                 sum_error = 0
                 pto_status = True
@@ -464,7 +470,7 @@ def ladybrown_new():
             
             sum_error = 0
             if controller_1.axis2.position() > 90:
-                target_angle = 210
+                target_angle = 150
             else:
                 target_angle = 345
             cprint(target_angle)
@@ -519,21 +525,44 @@ def autonomous(): #2 share goal side, 1 share ring side
     intake1.set_velocity(100, PERCENT)
     intake2.set_velocity(90, PERCENT)
     if team_position == "red_1":
-        drivetrain_forward(0.73, 100)
+        drivetrain_forward(0.75, 100)
         pto_status = True
         pto.set(pto_status)
         wait(50, MSEC)
-        ladybrown_pid(180)
-        drivetrain_forward(-1.4, 100)
-        drivetrain.turn(LEFT, 58, PERCENT)
-        wait(0.3, SECONDS)
+        ladybrown_pid(165, 55, 2000)
+        drivetrain_forward(-2.1, 100)
+        drivetrain.turn(LEFT, 50, PERCENT)
+        wait(0.35, SECONDS)
         drivetrain.stop()
         drivetrain_forward(0.9, 100)
         intake1.spin(REVERSE)
         intake_lift.set(False)
-        wait(500, MSEC)
-        drivetrain_forward(-0.9, 100)
-        
+        wait(200, MSEC)
+        drivetrain_forward(-0.85, 100)
+        drivetrain.turn(RIGHT, 60, PERCENT)
+        wait(0.3, SECONDS)
+        drivetrain.stop()
+        clamp_status = True
+        clamp.set(clamp_status)
+        drivetrain_forward(-3.5, 80)
+        clamp_status = False
+        clamp.set(clamp_status)
+        intake2.spin(REVERSE)
+        wait(0.2, SECONDS)
+        drivetrain.turn(RIGHT, 100, PERCENT)
+        wait(0.52, SECONDS)
+        drivetrain.stop()
+        drivetrain_forward(2.5, 100)
+        drivetrain.turn(RIGHT, 70, PERCENT)
+        wait(0.35, SECONDS)
+        drivetrain.stop()
+        drivetrain_forward(2.2, 100)
+        wait(0.7, SECONDS)
+        drivetrain.turn(RIGHT, 80, PERCENT)
+        wait(0.4, SECONDS)
+        drivetrain.stop()
+        ladybrown_pid(200, 100, 500)
+        drivetrain_forward(1, 100, 1000)
 
         
 
@@ -541,7 +570,44 @@ def autonomous(): #2 share goal side, 1 share ring side
         pass
         
     if team_position == "blue_1":
-        pass
+        drivetrain_forward(0.75, 100)
+        pto_status = True
+        pto.set(pto_status)
+        wait(50, MSEC)
+        ladybrown_pid(165, 55, 2000)
+        drivetrain_forward(-2.1, 100)
+        drivetrain.turn(RIGHT, 50, PERCENT)
+        wait(0.35, SECONDS)
+        drivetrain.stop()
+        drivetrain_forward(0.9, 100)
+        intake1.spin(REVERSE)
+        intake_lift.set(False)
+        wait(200, MSEC)
+        drivetrain_forward(-0.85, 100)
+        drivetrain.turn(LEFT, 60, PERCENT)
+        wait(0.3, SECONDS)
+        drivetrain.stop()
+        clamp_status = True
+        clamp.set(clamp_status)
+        drivetrain_forward(-3.5, 80)
+        clamp_status = False
+        clamp.set(clamp_status)
+        intake2.spin(REVERSE)
+        wait(0.2, SECONDS)
+        drivetrain.turn(LEFT, 100, PERCENT)
+        wait(0.52, SECONDS)
+        drivetrain.stop()
+        drivetrain_forward(2.5, 100)
+        drivetrain.turn(LEFT, 70, PERCENT)
+        wait(0.35, SECONDS)
+        drivetrain.stop()
+        drivetrain_forward(2.2, 100)
+        wait(0.7, SECONDS)
+        drivetrain.turn(LEFT, 80, PERCENT)
+        wait(0.4, SECONDS)
+        drivetrain.stop()
+        ladybrown_pid(200, 100, 500)
+        drivetrain_forward(1, 100, 1000)
              
     if team_position == "blue_2":
         pass
@@ -576,7 +642,7 @@ def driver_control():
     # Status Update
         pto.set(pto_status)
     # Drive Train(integral)
-        ratio = 1.05  # Bigger the number, less sensitive
+        ratio = 1.1  # Bigger the number, less sensitive
         integral_decay_rate = 0.000003  # Rate at which integral decays
         forward = 100 * math.sin(((controller_1.axis3.position()**3) / 636620))
         if controller_1.axis3.position() < 0:
